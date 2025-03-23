@@ -46,7 +46,7 @@ func (l *Lexer) add_token(kind token.TokenType, length int) {
 	if length == 0 {
 		l.tokens = append(l.tokens, token.NewToken(kind, "", l.row, l.col-length))
 	} else {
-		literal := string(l.input[l.position-1-length : l.position-1])
+		literal := string(l.input[l.position-length : l.position])
 		l.tokens = append(l.tokens, token.NewToken(kind, literal, l.row, l.col-length))
 	}
 }
@@ -119,7 +119,6 @@ func (l *Lexer) read_line_comment() {
 	l.advance()
 }
 
-
 // Read and advance block comment
 // Report error if block comment not terminated
 func (l *Lexer) read_block_comment() {
@@ -153,30 +152,41 @@ func (l *Lexer) read_token() {
 	switch char {
 	case '(':
 		l.add_token(token.LEFT_PAREN, 1)
+		return
 	case ')':
 		l.add_token(token.RIGHT_PAREN, 1)
+		return
 	case '{':
 		l.add_token(token.LEFT_BRACE, 1)
+		return
 	case '}':
 		l.add_token(token.RIGHT_BRACE, 1)
+		return
 	case '[':
 		l.add_token(token.LEFT_BRACKET, 1)
+		return
 	case ']':
 		l.add_token(token.RIGHT_PAREN, 1)
+		return
 	case ',':
 		l.add_token(token.COMMA, 1)
+		return
 	case ';':
 		l.add_token(token.SEMICOLON, 1)
+		return
 	case ':':
 		l.add_token(token.COLON, 1)
+		return
 	case '_':
 		l.add_token(token.UNDERSCORE, 1)
+		return
 	case '+':
 		if l.expect('=') {
 			l.add_token(token.PLUS_EQUAL, 2)
 		} else {
 			l.add_token(token.PLUS, 1)
 		}
+		return
 	case '-':
 		if l.expect('=') {
 			l.add_token(token.MINUS_EQUAL, 2)
@@ -185,6 +195,7 @@ func (l *Lexer) read_token() {
 		} else {
 			l.add_token(token.MINUS, 1)
 		}
+		return
 	case '/':
 		if l.expect('/') {
 			l.read_line_comment()
@@ -195,6 +206,7 @@ func (l *Lexer) read_token() {
 		} else {
 			l.add_token(token.SLASH, 1)
 		}
+		return
 	case '*':
 		if l.expect('*') {
 			if l.expect('=') {
@@ -207,30 +219,37 @@ func (l *Lexer) read_token() {
 		} else {
 			l.add_token(token.STAR, 1)
 		}
+		return
 	case '!':
 		if l.expect('=') {
 			l.add_token(token.BANG_EQUAL, 2)
 		} else {
 			l.add_token(token.BANG, 1)
 		}
+		return
 	case '=':
 		if l.expect('=') {
 			l.add_token(token.EQUAL_EQUAL, 2)
 		} else {
 			l.add_token(token.EQUAL, 1)
 		}
+		return
 	case '>':
 		if l.expect('=') {
 			l.add_token(token.GREATER_EQUAL, 2)
 		} else {
 			l.add_token(token.GREATER, 1)
 		}
+		return
 	case '<':
 		if l.expect('=') {
 			l.add_token(token.LESS_EQUAL, 2)
 		} else {
 			l.add_token(token.LESS, 1)
 		}
+		return
+	case ' ', '\t', '\r', '\n':
+		return
 	}
 }
 
