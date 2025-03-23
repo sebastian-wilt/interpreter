@@ -1,77 +1,81 @@
 package token
 
 type Token struct {
-	Kind  TokenKind
+	Kind  TokenType
 	Value string
-	Row   int
-	Col   int
+	Pos   Position
 }
 
-type TokenKind int
+type TokenType int
 
 const (
 	// Single symbols
-	LeftParen = iota
-	RightParen
-	LeftBrace
-	RightBrace
-	LeftBracket
-	RightBracket
-	Comma
-	Semicolon
-	Colon
-	Underscore
+	LEFT_PAREN    TokenType = iota // (
+	RIGHT_PAREN                    // )
+	LEFT_BRACE                     // {
+	RIGHT_BRACE                    // }
+	LEFT_BRACKET                   // [
+	RIGHT_BRACKET                  // ]
+	COMMA                          // ,
+	SEMICOLON                      // ;
+	COLON                          // :
+	UNDERSCORE                     // _
 
 	// Operators
-	Plus
-	PlusEqual
-	Minus
-	MinusEqual
-	Slash
-	SlashEqual
-	Star
-	StarEqual
-	StarStar
-	StarStarEqual
-	Bang
-	BangEqual
-	Equal
-	EqualEqual
-	Greater
-	GreaterEqual
-	Less
-	LessEqual
-	SingleArrow // ->
+	PLUS            // +
+	PLUS_EQUAL      // +=
+	MINUS           // -
+	MINUS_EQUAL     // -=
+	SLASH           // /
+	SLASH_EQUAL     // /=
+	STAR            // *
+	STAR_EQUAL      // *=
+	STAR_STAR       // **
+	STAR_STAR_EQUAL // **=
+	BANG            // !
+	BANG_EQUAL      // !=
+	EQUAL           // =
+	EQUAL_EQUAL     // ==
+	GREATER         // >
+	GREATER_EQUAL   // >=
+	LESS            // <
+	LESS_EQUAL      // <=
+	SINGLE_ARROW    // ->
 
-	Land
-	Lor
-	And
-	Or
-	Not
-	Caret
+	LAND        // &&
+	LOR         // ||
+	AND         // &
+	AND_EQUAL   // &=
+	OR          // |
+	OR_EQUAL    // |=
+	TILDE       // ~
+	TILDE_EQUAL // ~=
+	CARET       // ^
+	CARET_EQUAL // ^=
 
 	// Literals
-	Ident
-	String
-	Integer
-	Real
+	IDENT
+	STRING
+	CHAR
+	INTEGER
+	REAL
 
 	// Keywords
-	If 
-	Else 
-	False 
-	True 
-	For 
-	In 
-	While 
-	Fun 
-	Return 
-	Val 
-	Var
-	Continue
-	Fallthrough
-	Match
+	IF       // if
+	ELSE     // else
+	FALSE    // false
+	TRUE     // true
+	FOR      // for
+	IN       // in
+	WHILE    // while
+	FUN      // fun
+	RETURN   // return
+	VAL      // val
+	VAR      // var
+	CONTINUE // continue
+	FALL     // fall
+	MATCH    // match
 
 	EOF
-	Illegal
+	ILLEGAL
 )
