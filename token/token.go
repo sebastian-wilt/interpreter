@@ -6,6 +6,18 @@ type Token struct {
 	Pos   Position
 }
 
+// Create a new token
+func NewToken(kind TokenType, value string, row int, col int) Token {
+	return Token{
+		Kind:  kind,
+		Value: value,
+		Pos: Position{
+			Row:    row,
+			Column: col,
+		},
+	}
+}
+
 type TokenType int
 
 const (
@@ -21,11 +33,12 @@ const (
 	COLON                          // :
 	UNDERSCORE                     // _
 
-	// Operators
+	// Operators (1-3 characters)
 	PLUS            // +
 	PLUS_EQUAL      // +=
 	MINUS           // -
 	MINUS_EQUAL     // -=
+	MINUS_GREATER    // ->
 	SLASH           // /
 	SLASH_EQUAL     // /=
 	STAR            // *
@@ -40,7 +53,6 @@ const (
 	GREATER_EQUAL   // >=
 	LESS            // <
 	LESS_EQUAL      // <=
-	SINGLE_ARROW    // ->
 
 	LAND        // &&
 	LOR         // ||
