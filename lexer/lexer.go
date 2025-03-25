@@ -166,7 +166,7 @@ func (l *Lexer) read_token() {
 		l.add_token(token.LEFT_BRACKET, "[", 1)
 		return
 	case ']':
-		l.add_token(token.RIGHT_PAREN, "]", 1)
+		l.add_token(token.RIGHT_BRACKET, "]", 1)
 		return
 	case ',':
 		l.add_token(token.COMMA, ",", 1)

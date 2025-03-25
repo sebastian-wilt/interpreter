@@ -164,10 +164,76 @@ func TestStringsAndChars(t *testing.T) {
 		},
 	}
 
-	print_tokens(tokens)
-
 	verify_token_type(t, expected, tokens)
 	verify_token_value(t, expected, tokens)
+}
+
+func TestSymbols(t *testing.T) {
+	input := "(){}[],;:_"
+
+	lexer := NewLexer([]byte(input))
+	tokens := lexer.Tokenize()
+
+	expected := []token.Token{
+		{
+			Kind:  token.LEFT_PAREN,
+			Value: "(",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.RIGHT_PAREN,
+			Value: ")",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.LEFT_BRACE,
+			Value: "{",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.RIGHT_BRACE,
+			Value: "}",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.LEFT_BRACKET,
+			Value: "[",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.RIGHT_BRACKET,
+			Value: "]",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.COMMA,
+			Value: ",",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.SEMICOLON,
+			Value: ";",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.COLON,
+			Value: ":",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.UNDERSCORE,
+			Value: "_",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.EOF,
+			Value: "",
+			Pos:   token.Position{},
+		},
+	}
+
+	verify_token_type(t, expected, tokens)
+	verify_token_type(t, expected, tokens)
 }
 
 func verify_token_type(t *testing.T, expected []token.Token, tokens []token.Token) {
