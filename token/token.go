@@ -38,7 +38,7 @@ const (
 	PLUS_EQUAL      // +=
 	MINUS           // -
 	MINUS_EQUAL     // -=
-	MINUS_GREATER    // ->
+	MINUS_GREATER   // ->
 	SLASH           // /
 	SLASH_EQUAL     // /=
 	STAR            // *

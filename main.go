@@ -6,7 +6,8 @@ import (
 )
 
 func main() {
-	src := "( += );"
+	src := "if else false true for in while fun return val var continue fall match"
+	// src := "( += );"
 
 	lexer := lexer.NewLexer([]byte(src))
 

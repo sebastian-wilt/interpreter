@@ -1,9 +1,12 @@
 package lexer
 
 import (
+	"errors"
 	"fmt"
 	"interpreter/token"
 	"os"
+	"strings"
+	"unicode"
 )
 
 type Lexer struct {
@@ -12,7 +15,8 @@ type Lexer struct {
 	row      int                        // Row in source code
 	col      int                        // Column in source code
 	keywords map[string]token.TokenType // Map from keyword "string" to tokentype
-	tokens   []token.Token
+	tokens   []token.Token              // Lexed tokens from input
+	errors   []error                    // Lex errors
 }
 
 // Create new lexer with source as text
@@ -23,6 +27,8 @@ func NewLexer(source []byte) Lexer {
 		row:      1,
 		col:      1,
 		keywords: get_keywords(),
+		tokens:   []token.Token{},
+		errors:   []error{},
 	}
 }
 
@@ -52,7 +58,7 @@ func (l *Lexer) add_token(kind token.TokenType, length int) {
 }
 
 func (l *Lexer) is_at_end() bool {
-	return l.position == len(l.input)
+	return l.position >= len(l.input)
 }
 
 // Peek next character in input
@@ -250,7 +256,171 @@ func (l *Lexer) read_token() {
 		return
 	case ' ', '\t', '\r', '\n':
 		return
+	case '&':
+		if l.expect('&') {
+			l.add_token(token.LAND, 2)
+		} else if l.expect('=') {
+			l.add_token(token.AND_EQUAL, 2)
+		} else {
+			l.add_token(token.AND, 1)
+		}
+		return
+	case '|':
+		if l.expect('|') {
+			l.add_token(token.LOR, 2)
+		} else if l.expect('=') {
+			l.add_token(token.OR_EQUAL, 2)
+		} else {
+			l.add_token(token.OR, 1)
+		}
+		return
+	case '~':
+		if l.expect('=') {
+			l.add_token(token.TILDE_EQUAL, 2)
+		} else {
+			l.add_token(token.TILDE, 1)
+		}
+		return
+	case '^':
+		if l.expect('=') {
+			l.add_token(token.CARET_EQUAL, 2)
+		} else {
+			l.add_token(token.CARET, 1)
+		}
+		return
+	case '\'':
+		s, ttype := l.read_char()
+		// TODO: Add error if illegal
+		l.add_token(ttype, len(s) + 2)
+	case '"':
+		length, err := l.read_string()
+		if err != nil {
+			return
+		}
+		l.add_token(token.STRING, length)
+		return
 	}
+
+	if unicode.IsLetter(rune(char)) {
+		s := l.read_identifier(char)
+		kw, ok := l.keywords[s]
+		if ok {
+			l.add_token(kw, len(s))
+		} else {
+			l.add_token(token.IDENT, len(s)+2)
+		}
+		return
+	}
+
+	if unicode.IsDigit(rune(char)) {
+		num, ttype := l.read_number(char)
+		if ttype == token.ILLEGAL {
+			// TODO: Error handling
+		}
+		l.add_token(ttype, len(num))
+		return
+	}
+
+	// TODO: Illegal token
+}
+
+func (l *Lexer) read_number(start byte) (string, token.TokenType) {
+	var sb strings.Builder
+	sb.WriteByte(start)
+
+	valid := true
+	ttype := token.INTEGER
+
+	for peek := rune(l.peek()); unicode.IsDigit(peek) || (peek == '.' && unicode.IsDigit(rune(l.peek_next()))) || unicode.IsLetter(peek); {
+		if unicode.IsLetter(peek) {
+			valid = false
+		}
+
+		if peek == '.' {
+			if ttype == token.REAL {
+				valid = false
+			}
+
+			ttype = token.REAL
+		}
+
+		sb.WriteByte(l.advance())
+		peek = rune(l.peek())
+	}
+
+	if !valid {
+		return sb.String(), token.ILLEGAL
+	}
+
+	return sb.String(), ttype
+}
+
+// Read identifier from input
+func (l *Lexer) read_identifier(start byte) string {
+	var sb strings.Builder
+	sb.WriteByte(start)
+
+	for peek := rune(l.peek()); unicode.IsLetter(peek) || unicode.IsDigit(peek) || peek == '_'; {
+		sb.WriteByte(l.advance())
+		peek = rune(l.peek())
+	}
+
+	return sb.String()
+}
+
+// Read string from input
+// Returns error if string is unterminated
+func (l *Lexer) read_string() (int, error) {
+	s := ""
+	for l.peek() != '"' && !l.is_at_end() {
+		s += string(l.advance())
+	}
+
+	if l.is_at_end() {
+		fmt.Errorf("Unterminated string")
+		return 0, errors.New("Unterminated string")
+	}
+
+	l.expect('"')
+
+	return len(s), nil
+}
+
+// Read a character from input ('c')
+func (l *Lexer) read_char() (string, token.TokenType) {
+	char := l.advance()
+	if l.expect('\'') {
+		return string(char), token.CHAR
+	}
+
+	if char == '\'' {
+		fmt.Fprintf(os.Stderr, "Empty character\n")
+		return "", token.ILLEGAL
+	}
+
+	var sb strings.Builder
+	sb.WriteByte(char)
+
+	iter := 0
+	for peek := l.peek(); peek != '\'' && !l.is_at_end(); {
+		sb.WriteByte(l.advance())
+		peek = l.peek()
+		iter += 1
+
+		if iter == 500 {
+			return "", token.ILLEGAL
+		}
+	}
+
+	if l.peek() == '\'' {
+		l.advance()
+		return sb.String(), token.ILLEGAL
+	}
+
+
+	// TODO: ERROR for unterminated char
+
+	return "\000", token.ILLEGAL
 }
 
 // Returns map from strings to tokentype
