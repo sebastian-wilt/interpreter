@@ -1,7 +1,6 @@
 package lexer
 
 import (
-	"errors"
 	"fmt"
 	"interpreter/token"
 	"os"
@@ -42,19 +41,14 @@ func (l *Lexer) Tokenize() []token.Token {
 		l.read_token()
 	}
 
-	l.add_token(token.EOF, 0)
+	l.add_token(token.EOF, "", 0)
 
 	return l.tokens
 }
 
 // Create new token with length and add to tokens
-func (l *Lexer) add_token(kind token.TokenType, length int) {
-	if length == 0 {
-		l.tokens = append(l.tokens, token.NewToken(kind, "", l.row, l.col-length))
-	} else {
-		literal := string(l.input[l.position-length : l.position])
-		l.tokens = append(l.tokens, token.NewToken(kind, literal, l.row, l.col-length))
-	}
+func (l *Lexer) add_token(kind token.TokenType, value string, length int) {
+	l.tokens = append(l.tokens, token.NewToken(kind, value, l.row, l.col-length))
 }
 
 func (l *Lexer) is_at_end() bool {
@@ -157,49 +151,49 @@ func (l *Lexer) read_token() {
 
 	switch char {
 	case '(':
-		l.add_token(token.LEFT_PAREN, 1)
+		l.add_token(token.LEFT_PAREN, "(", 1)
 		return
 	case ')':
-		l.add_token(token.RIGHT_PAREN, 1)
+		l.add_token(token.RIGHT_PAREN, ")", 1)
 		return
 	case '{':
-		l.add_token(token.LEFT_BRACE, 1)
+		l.add_token(token.LEFT_BRACE, "{", 1)
 		return
 	case '}':
-		l.add_token(token.RIGHT_BRACE, 1)
+		l.add_token(token.RIGHT_BRACE, "}", 1)
 		return
 	case '[':
-		l.add_token(token.LEFT_BRACKET, 1)
+		l.add_token(token.LEFT_BRACKET, "[", 1)
 		return
 	case ']':
-		l.add_token(token.RIGHT_PAREN, 1)
+		l.add_token(token.RIGHT_PAREN, "]", 1)
 		return
 	case ',':
-		l.add_token(token.COMMA, 1)
+		l.add_token(token.COMMA, ",", 1)
 		return
 	case ';':
-		l.add_token(token.SEMICOLON, 1)
+		l.add_token(token.SEMICOLON, ";", 1)
 		return
 	case ':':
-		l.add_token(token.COLON, 1)
+		l.add_token(token.COLON, ":", 1)
 		return
 	case '_':
-		l.add_token(token.UNDERSCORE, 1)
+		l.add_token(token.UNDERSCORE, "_", 1)
 		return
 	case '+':
 		if l.expect('=') {
-			l.add_token(token.PLUS_EQUAL, 2)
+			l.add_token(token.PLUS_EQUAL, "+=", 2)
 		} else {
-			l.add_token(token.PLUS, 1)
+			l.add_token(token.PLUS, "+", 1)
 		}
 		return
 	case '-':
 		if l.expect('=') {
-			l.add_token(token.MINUS_EQUAL, 2)
+			l.add_token(token.MINUS_EQUAL, "-=", 2)
 		} else if l.expect('>') {
-			l.add_token(token.MINUS_GREATER, 2)
+			l.add_token(token.MINUS_GREATER, "->", 2)
 		} else {
-			l.add_token(token.MINUS, 1)
+			l.add_token(token.MINUS, "-", 1)
 		}
 		return
 	case '/':
@@ -208,96 +202,99 @@ func (l *Lexer) read_token() {
 		} else if l.expect('*') {
 			l.read_block_comment()
 		} else if l.expect('=') {
-			l.add_token(token.SLASH_EQUAL, 1)
+			l.add_token(token.SLASH_EQUAL, "/=", 2)
 		} else {
-			l.add_token(token.SLASH, 1)
+			l.add_token(token.SLASH, "/", 1)
 		}
 		return
 	case '*':
 		if l.expect('*') {
 			if l.expect('=') {
-				l.add_token(token.STAR_STAR_EQUAL, 3)
+				l.add_token(token.STAR_STAR_EQUAL, "**=", 3)
 			} else {
-				l.add_token(token.STAR_STAR, 2)
+				l.add_token(token.STAR_STAR, "**", 2)
 			}
 		} else if l.expect('=') {
-			l.add_token(token.STAR_EQUAL, 2)
+			l.add_token(token.STAR_EQUAL, "*=", 2)
 		} else {
-			l.add_token(token.STAR, 1)
+			l.add_token(token.STAR, "*", 1)
 		}
 		return
 	case '!':
 		if l.expect('=') {
-			l.add_token(token.BANG_EQUAL, 2)
+			l.add_token(token.BANG_EQUAL, "!=", 2)
 		} else {
-			l.add_token(token.BANG, 1)
+			l.add_token(token.BANG, "!", 1)
 		}
 		return
 	case '=':
 		if l.expect('=') {
-			l.add_token(token.EQUAL_EQUAL, 2)
+			l.add_token(token.EQUAL_EQUAL, "==", 2)
 		} else {
-			l.add_token(token.EQUAL, 1)
+			l.add_token(token.EQUAL, "=", 1)
 		}
 		return
 	case '>':
 		if l.expect('=') {
-			l.add_token(token.GREATER_EQUAL, 2)
+			l.add_token(token.GREATER_EQUAL, ">=", 2)
 		} else {
-			l.add_token(token.GREATER, 1)
+			l.add_token(token.GREATER, ">", 1)
 		}
 		return
 	case '<':
 		if l.expect('=') {
-			l.add_token(token.LESS_EQUAL, 2)
+			l.add_token(token.LESS_EQUAL, "<=", 2)
 		} else {
-			l.add_token(token.LESS, 1)
+			l.add_token(token.LESS, "<", 1)
 		}
 		return
 	case ' ', '\t', '\r', '\n':
 		return
 	case '&':
 		if l.expect('&') {
-			l.add_token(token.LAND, 2)
+			l.add_token(token.LAND, "&&", 2)
 		} else if l.expect('=') {
-			l.add_token(token.AND_EQUAL, 2)
+			l.add_token(token.AND_EQUAL, "&=", 2)
 		} else {
-			l.add_token(token.AND, 1)
+			l.add_token(token.AND, "&", 1)
 		}
 		return
 	case '|':
 		if l.expect('|') {
-			l.add_token(token.LOR, 2)
+			l.add_token(token.LOR, "||", 2)
 		} else if l.expect('=') {
-			l.add_token(token.OR_EQUAL, 2)
+			l.add_token(token.OR_EQUAL, "|=", 2)
 		} else {
-			l.add_token(token.OR, 1)
+			l.add_token(token.OR, "|", 1)
 		}
 		return
 	case '~':
 		if l.expect('=') {
-			l.add_token(token.TILDE_EQUAL, 2)
+			l.add_token(token.TILDE_EQUAL, "~=", 2)
 		} else {
-			l.add_token(token.TILDE, 1)
+			l.add_token(token.TILDE, "~", 1)
 		}
 		return
 	case '^':
 		if l.expect('=') {
-			l.add_token(token.CARET_EQUAL, 2)
+			l.add_token(token.CARET_EQUAL, "^=", 2)
 		} else {
-			l.add_token(token.CARET, 1)
+			l.add_token(token.CARET, "^", 1)
 		}
 		return
 	case '\'':
 		s, ttype := l.read_char()
 		// TODO: Add error if illegal
-		l.add_token(ttype, len(s) + 2)
+		l.add_token(ttype, s, len(s)+2)
 	case '"':
-		length, err := l.read_string()
-		if err != nil {
-			return
+		s, ttype := l.read_string()
+		var padding int
+		if ttype == token.STRING {
+			padding = 2
+		} else {
+			padding = 1
 		}
-		l.add_token(token.STRING, length)
+		l.add_token(ttype, s, len(s)+padding)
 		return
 	}
 
@@ -305,9 +302,9 @@ func (l *Lexer) read_token() {
 		s := l.read_identifier(char)
 		kw, ok := l.keywords[s]
 		if ok {
-			l.add_token(kw, len(s))
+			l.add_token(kw, s, len(s))
 		} else {
-			l.add_token(token.IDENT, len(s)+2)
+			l.add_token(token.IDENT, s, len(s))
 		}
 		return
 	}
@@ -317,7 +314,7 @@ func (l *Lexer) read_token() {
 		if ttype == token.ILLEGAL {
 			// TODO: Error handling
 		}
-		l.add_token(ttype, len(num))
+		l.add_token(ttype, num, len(num))
 		return
 	}
 
@@ -370,20 +367,20 @@ func (l *Lexer) read_identifier(start byte) string {
 
 // Read string from input
 // Returns error if string is unterminated
-func (l *Lexer) read_string() (int, error) {
-	s := ""
+func (l *Lexer) read_string() (string, token.TokenType) {
+	var sb strings.Builder
 	for l.peek() != '"' && !l.is_at_end() {
-		s += string(l.advance())
+		sb.WriteByte(l.advance())
 	}
 
 	if l.is_at_end() {
 		fmt.Errorf("Unterminated string")
-		return 0, errors.New("Unterminated string")
+		return sb.String(), token.ILLEGAL
 	}
 
 	l.expect('"')
 
-	return len(s), nil
+	return sb.String(), token.STRING
 }
 
 // Read a character from input ('c')
@@ -416,7 +413,6 @@ func (l *Lexer) read_char() (string, token.TokenType) {
 		l.advance()
 		return sb.String(), token.ILLEGAL
 	}
-
 
 	// TODO: ERROR for unterminated char
 
