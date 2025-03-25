@@ -236,6 +236,172 @@ func TestSymbols(t *testing.T) {
 	verify_token_type(t, expected, tokens)
 }
 
+func TestOperators(t *testing.T) {
+	input := `+ += - -= -> / /= * *= ** **= ! 
+			  != = == > >= < <= && || & &= | |=
+			  ~ ~= ^ ^=`
+
+	lexer := NewLexer([]byte(input))
+	tokens := lexer.Tokenize()
+
+	expected := []token.Token{
+		{
+			Kind:  token.PLUS,
+			Value: "+",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.PLUS_EQUAL,
+			Value: "+=",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.MINUS,
+			Value: "-",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.MINUS_EQUAL,
+			Value: "-=",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.MINUS_GREATER,
+			Value: "->",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.SLASH,
+			Value: "/",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.SLASH_EQUAL,
+			Value: "/=",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.STAR,
+			Value: "*",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.STAR_EQUAL,
+			Value: "*=",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.STAR_STAR,
+			Value: "**",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.STAR_STAR_EQUAL,
+			Value: "**=",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.BANG,
+			Value: "!",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.BANG_EQUAL,
+			Value: "!=",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.EQUAL,
+			Value: "=",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.EQUAL_EQUAL,
+			Value: "==",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.GREATER,
+			Value: ">",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.GREATER_EQUAL,
+			Value: ">=",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.LESS,
+			Value: "<",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.LESS_EQUAL,
+			Value: "<=",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.LAND,
+			Value: "&&",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.LOR,
+			Value: "||",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.AND,
+			Value: "&",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.AND_EQUAL,
+			Value: "&=",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.OR,
+			Value: "|",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.OR_EQUAL,
+			Value: "|=",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.TILDE,
+			Value: "~",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.TILDE_EQUAL,
+			Value: "~=",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.CARET,
+			Value: "^",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.CARET_EQUAL,
+			Value: "^=",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.EOF,
+			Value: "",
+			Pos:   token.Position{},
+		},
+	}
+
+	verify_token_type(t, expected, tokens)
+	verify_token_value(t, expected, tokens)
+
+}
+
 func verify_token_type(t *testing.T, expected []token.Token, tokens []token.Token) {
 	if len(tokens) != len(expected) {
 		t.Errorf("Incorrect number of tokens: expected %d, got %d\n", len(expected), len(tokens))
