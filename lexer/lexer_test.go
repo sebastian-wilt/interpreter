@@ -402,6 +402,49 @@ func TestOperators(t *testing.T) {
 
 }
 
+func TestIdentifiers(t *testing.T) {
+	input := "variable snake_case camelCase PascalCase snake_case_with_number_1234"
+
+	lexer := NewLexer([]byte(input))
+	tokens := lexer.Tokenize()
+
+	expected := []token.Token{
+		{
+			Kind:  token.IDENT,
+			Value: "variable",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.IDENT,
+			Value: "snake_case",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.IDENT,
+			Value: "camelCase",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.IDENT,
+			Value: "PascalCase",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.IDENT,
+			Value: "snake_case_with_number_1234",
+			Pos:   token.Position{},
+		},
+		{
+			Kind:  token.EOF,
+			Value: "",
+			Pos:   token.Position{},
+		},
+	}
+
+	verify_token_type(t, expected, tokens)
+	verify_token_value(t, expected, tokens)
+}
+
 func verify_token_type(t *testing.T, expected []token.Token, tokens []token.Token) {
 	if len(tokens) != len(expected) {
 		t.Errorf("Incorrect number of tokens: expected %d, got %d\n", len(expected), len(tokens))
