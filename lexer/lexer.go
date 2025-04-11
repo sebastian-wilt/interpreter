@@ -1,9 +1,9 @@
 package lexer
 
 import (
+	"errors"
 	"fmt"
 	"interpreter/token"
-	"os"
 	"strings"
 	"unicode"
 )
@@ -32,7 +32,7 @@ func NewLexer(source []byte) Lexer {
 }
 
 // Create tokens for entire source code
-func (l *Lexer) Tokenize() []token.Token {
+func (l *Lexer) Tokenize() ([]token.Token, []error) {
 	for {
 		if l.is_at_end() {
 			break
@@ -43,7 +43,11 @@ func (l *Lexer) Tokenize() []token.Token {
 
 	l.add_token(token.EOF, "", 0)
 
-	return l.tokens
+	if len(l.errors) != 0 {
+		return l.tokens, l.errors
+	}
+
+	return l.tokens, nil
 }
 
 // Create new token with length and add to tokens
@@ -127,8 +131,8 @@ func (l *Lexer) read_block_comment() {
 	}
 
 	if l.is_at_end() {
-		// TODO: Proper error reporting
-		fmt.Fprint(os.Stderr, "Unterminated block comment.")
+		msg := fmt.Sprintf("Unterminated block comment at line: %d\n", l.row)
+		l.errors = append(l.errors, errors.New(msg))
 		return
 	}
 
@@ -284,7 +288,6 @@ func (l *Lexer) read_token() {
 		return
 	case '\'':
 		s, ttype := l.read_char()
-		// TODO: Add error if illegal
 		l.add_token(ttype, s, len(s)+2)
 	case '"':
 		s, ttype := l.read_string()
@@ -311,9 +314,6 @@ func (l *Lexer) read_token() {
 
 	if unicode.IsDigit(rune(char)) {
 		num, ttype := l.read_number(char)
-		if ttype == token.ILLEGAL {
-			// TODO: Error handling
-		}
 		l.add_token(ttype, num, len(num))
 		return
 	}
@@ -333,7 +333,7 @@ func (l *Lexer) read_number(start byte) (string, token.TokenType) {
 			valid = false
 		}
 
-		if peek == '.' {
+		if peek == '.' && valid {
 			if ttype == token.REAL {
 				valid = false
 			}
@@ -346,6 +346,8 @@ func (l *Lexer) read_number(start byte) (string, token.TokenType) {
 	}
 
 	if !valid {
+		msg := fmt.Sprintf("Invalid literal at line %d\n", l.row)
+		l.errors = append(l.errors, errors.New(msg))
 		return sb.String(), token.ILLEGAL
 	}
 
@@ -374,7 +376,7 @@ func (l *Lexer) read_string() (string, token.TokenType) {
 	}
 
 	if l.is_at_end() {
-		fmt.Errorf("Unterminated string")
+		l.errors = append(l.errors, fmt.Errorf("Unterminated string"))
 		return sb.String(), token.ILLEGAL
 	}
 
@@ -391,32 +393,28 @@ func (l *Lexer) read_char() (string, token.TokenType) {
 	}
 
 	if char == '\'' {
-		fmt.Fprintf(os.Stderr, "Empty character\n")
+		l.errors = append(l.errors, fmt.Errorf("Empty char literal"))
 		return "", token.ILLEGAL
 	}
 
 	var sb strings.Builder
 	sb.WriteByte(char)
 
-	iter := 0
 	for peek := l.peek(); peek != '\'' && !l.is_at_end(); {
 		sb.WriteByte(l.advance())
 		peek = l.peek()
-		iter += 1
-
-		if iter == 500 {
-			return "", token.ILLEGAL
-		}
 	}
 
 	if l.peek() == '\'' {
 		l.advance()
+		l.errors = append(l.errors, fmt.Errorf("Invalid char literal at line %d\n", l.row))
 		return sb.String(), token.ILLEGAL
 	}
 
 	// TODO: ERROR for unterminated char
+	l.errors = append(l.errors, fmt.Errorf("Unterminated char literal at line %d\n", l.row))
 
-	return "\000", token.ILLEGAL
+	return sb.String(), token.ILLEGAL
 }
 
 // Returns map from strings to tokentype
