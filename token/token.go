@@ -33,6 +33,7 @@ const (
 	COMMA                          // ,
 	SEMICOLON                      // ;
 	COLON                          // :
+	PERCENT                        // %
 	UNDERSCORE                     // _
 
 	// Operators (1-3 characters)
@@ -216,6 +217,8 @@ func (t TokenType) String() string {
 		return "'var'"
 	case WHILE:
 		return "'while'"
+	case PERCENT:
+		return "'%"
 	}
 
 	panic(fmt.Sprintf("unexpected token.TokenType: %#v", t))

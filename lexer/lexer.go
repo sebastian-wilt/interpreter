@@ -211,6 +211,9 @@ func (l *Lexer) read_token() {
 			l.add_token(token.SLASH, "/", 1)
 		}
 		return
+	case '%':
+		l.add_token(token.PERCENT, "%", 1)
+		return
 	case '*':
 		if l.expect('*') {
 			if l.expect('=') {

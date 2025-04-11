@@ -10,7 +10,12 @@ func TestKeywords(t *testing.T) {
 	input := "if else false true for in while fun return val var continue fall match"
 
 	lexer := NewLexer([]byte(input))
-	tokens := lexer.Tokenize()
+	tokens, errors := lexer.Tokenize()
+	if len(errors) != 0 {
+		for _, err := range errors {
+			t.Logf("%v", err)
+		}
+	}
 
 	expected := []token.Token{
 		{
@@ -97,7 +102,12 @@ func TestNumber(t *testing.T) {
 	input := "123.3 1991we723 2345 123.4.5.5"
 
 	lexer := NewLexer([]byte(input))
-	tokens := lexer.Tokenize()
+	tokens, errors := lexer.Tokenize()
+	if len(errors) != 0 {
+		for _, err := range errors {
+			t.Logf("%v", err)
+		}
+	}
 
 	expected := []token.Token{
 		{
@@ -134,7 +144,12 @@ func TestStringsAndChars(t *testing.T) {
 	input := "\"Hello world\" 'c' 'a' 'invalid'"
 
 	lexer := NewLexer([]byte(input))
-	tokens := lexer.Tokenize()
+	tokens, errors := lexer.Tokenize()
+	if len(errors) != 0 {
+		for _, err := range errors {
+			t.Logf("%v", err)
+		}
+	}
 
 	expected := []token.Token{
 		{
@@ -172,7 +187,12 @@ func TestSymbols(t *testing.T) {
 	input := "(){}[],;:_"
 
 	lexer := NewLexer([]byte(input))
-	tokens := lexer.Tokenize()
+	tokens, errors := lexer.Tokenize()
+	if len(errors) != 0 {
+		for _, err := range errors {
+			t.Logf("%v", err)
+		}
+	}
 
 	expected := []token.Token{
 		{
@@ -239,10 +259,15 @@ func TestSymbols(t *testing.T) {
 func TestOperators(t *testing.T) {
 	input := `+ += - -= -> / /= * *= ** **= ! 
 			  != = == > >= < <= && || & &= | |=
-			  ~ ~= ^ ^=`
+			  ~ ~= ^ ^= %`
 
 	lexer := NewLexer([]byte(input))
-	tokens := lexer.Tokenize()
+	tokens, errors := lexer.Tokenize()
+	if len(errors) != 0 {
+		for _, err := range errors {
+			t.Logf("%v", err)
+		}
+	}
 
 	expected := []token.Token{
 		{
@@ -391,6 +416,11 @@ func TestOperators(t *testing.T) {
 			Pos:   token.Position{},
 		},
 		{
+			Kind:  token.PERCENT,
+			Value: "%",
+			Pos:   token.Position{},
+		},
+		{
 			Kind:  token.EOF,
 			Value: "",
 			Pos:   token.Position{},
@@ -406,7 +436,12 @@ func TestIdentifiers(t *testing.T) {
 	input := "variable snake_case camelCase PascalCase snake_case_with_number_1234"
 
 	lexer := NewLexer([]byte(input))
-	tokens := lexer.Tokenize()
+	tokens, errors := lexer.Tokenize()
+	if len(errors) != 0 {
+		for _, err := range errors {
+			t.Logf("%v", err)
+		}
+	}
 
 	expected := []token.Token{
 		{
