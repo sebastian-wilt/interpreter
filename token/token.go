@@ -1,5 +1,7 @@
 package token
 
+import "fmt"
+
 type Token struct {
 	Kind  TokenType
 	Value string
@@ -91,3 +93,130 @@ const (
 	EOF
 	ILLEGAL
 )
+
+func (t TokenType) String() string {
+	switch t {
+	case AND:
+		return "'&'"
+	case AND_EQUAL:
+		return "'&='"
+	case BANG:
+		return "'!'"
+	case BANG_EQUAL:
+		return "'!="
+	case CARET:
+		return "'^'"
+	case CARET_EQUAL:
+		return "''^="
+	case CHAR:
+		return "char"
+	case COLON:
+		return "':'"
+	case COMMA:
+		return "','"
+	case CONTINUE:
+		return "'continue'"
+	case ELSE:
+		return "'else'"
+	case EOF:
+		return "''"
+	case EQUAL:
+		return "'='"
+	case EQUAL_EQUAL:
+		return "'=='"
+	case FALL:
+		return "'fall'"
+	case FALSE:
+		return "'false'"
+	case FOR:
+		return "'for'"
+	case FUN:
+		return "'fun'"
+	case GREATER:
+		return "'>'"
+	case GREATER_EQUAL:
+		return "'>='"
+	case IDENT:
+		return "identifier"
+	case IF:
+		return "'if'"
+	case ILLEGAL:
+		return "illegal token"
+	case IN:
+		return "'in'"
+	case INTEGER:
+		return "integer"
+	case LAND:
+		return "'&&'"
+	case LEFT_BRACE:
+		return "'{'"
+	case LEFT_BRACKET:
+		return "'['"
+	case LEFT_PAREN:
+		return "'('"
+	case LESS:
+		return "'<'"
+	case LESS_EQUAL:
+		return "'<='"
+	case LOR:
+		return "'||'"
+	case MATCH:
+		return "'match'"
+	case MINUS:
+		return "'-'"
+	case MINUS_EQUAL:
+		return "'-='"
+	case MINUS_GREATER:
+		return "'->'"
+	case OR:
+		return "'|'"
+	case OR_EQUAL:
+		return "'|='"
+	case PLUS:
+		return "'+'"
+	case PLUS_EQUAL:
+		return "'+='"
+	case REAL:
+		return "real"
+	case RETURN:
+		return "'return'"
+	case RIGHT_BRACE:
+		return "'}'"
+	case RIGHT_BRACKET:
+		return "']'"
+	case RIGHT_PAREN:
+		return "')'"
+	case SEMICOLON:
+		return "';'"
+	case SLASH:
+		return "'/'"
+	case SLASH_EQUAL:
+		return "'/='"
+	case STAR:
+		return "'*'"
+	case STAR_EQUAL:
+		return "'*='"
+	case STAR_STAR:
+		return "'**'"
+	case STAR_STAR_EQUAL:
+		return "'**='"
+	case STRING:
+		return "string"
+	case TILDE:
+		return "'~'"
+	case TILDE_EQUAL:
+		return "'~='"
+	case TRUE:
+		return "'true'"
+	case UNDERSCORE:
+		return "'_'"
+	case VAL:
+		return "'val'"
+	case VAR:
+		return "'var'"
+	case WHILE:
+		return "'while'"
+	}
+
+	panic(fmt.Sprintf("unexpected token.TokenType: %#v", t))
+}
