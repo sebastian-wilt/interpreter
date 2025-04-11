@@ -3,16 +3,39 @@ package main
 import (
 	"fmt"
 	"interpreter/lexer"
+	"os"
+
+	"github.com/chzyer/readline"
 )
 
 func main() {
-	src := "if else false true for in while fun return val var continue fall match"
-	// src := "( += );"
+	repl()
+}
 
-	lexer := lexer.NewLexer([]byte(src))
+func repl() {
+	rl, err := readline.New("> ")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to open repl")
+	}
 
-	for _, tok := range lexer.Tokenize() {
-		fmt.Printf("%v\n", tok)	
+	for {
+		line, err := rl.Readline()
+		if err != nil {
+			return
+		}
+
+		lexer := lexer.NewLexer([]byte(line))
+		tokens, errors := lexer.Tokenize()
+		if errors != nil {
+			for _, err := range errors {
+				fmt.Printf("Error: %s", err)
+			}
+		}
+
+		for _, tok := range tokens {
+			fmt.Printf("%v\n", tok)
+		}
+
 	}
 
 }
