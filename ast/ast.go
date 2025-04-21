@@ -2,6 +2,7 @@ package ast
 
 import (
 	"interpreter/token"
+	"fmt"
 )
 
 type Node interface {
@@ -11,6 +12,7 @@ type Node interface {
 type Expr interface {
 	Node
 	exprNode()
+	fmt.Stringer // For printing parse tree
 }
 
 type Stmt interface {
