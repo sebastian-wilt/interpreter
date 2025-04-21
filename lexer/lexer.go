@@ -379,7 +379,7 @@ func (l *Lexer) read_string() (string, token.TokenType) {
 	}
 
 	if l.is_at_end() {
-		l.errors = append(l.errors, fmt.Errorf("Unterminated string"))
+		l.errors = append(l.errors, fmt.Errorf("Unterminated string at line %d", l.row))
 		return sb.String(), token.ILLEGAL
 	}
 
@@ -396,7 +396,7 @@ func (l *Lexer) read_char() (string, token.TokenType) {
 	}
 
 	if char == '\'' {
-		l.errors = append(l.errors, fmt.Errorf("Empty char literal"))
+		l.errors = append(l.errors, fmt.Errorf("Empty char literal at line %d", l.row))
 		return "", token.ILLEGAL
 	}
 
@@ -414,7 +414,6 @@ func (l *Lexer) read_char() (string, token.TokenType) {
 		return sb.String(), token.ILLEGAL
 	}
 
-	// TODO: ERROR for unterminated char
 	l.errors = append(l.errors, fmt.Errorf("Unterminated char literal at line %d\n", l.row))
 
 	return sb.String(), token.ILLEGAL
