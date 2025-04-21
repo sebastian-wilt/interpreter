@@ -221,5 +221,5 @@ func (t TokenType) String() string {
 		return "'%"
 	}
 
-	panic(fmt.Sprintf("unexpected token.TokenType: %#v", t))
+	panic(fmt.Sprintf("Unexpected token.TokenType: %#v", t))
 }
