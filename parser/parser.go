@@ -57,7 +57,7 @@ func (p *Parser) expect(tokens []token.TokenType) bool {
 
 // Check if next token is kind
 func (p *Parser) check(kind token.TokenType) bool {
-	if p.is_at_end() {
+	if p.isAtEnd() {
 		return false
 	}
 	return kind == p.tokens[p.current].Kind
@@ -74,7 +74,7 @@ func (p *Parser) consume(kind token.TokenType) (token.Token, error) {
 	return token.Token{}, p.error(fmt.Sprintf("Unexpected token at line: %d. Expected %v, found %v", tok.Pos.Row, kind, tok.Kind))
 }
 
-func (p *Parser) is_at_end() bool {
+func (p *Parser) isAtEnd() bool {
 	return p.current == len(p.tokens)
 }
 
@@ -87,7 +87,7 @@ func (p *Parser) error(message string) error {
 
 // Advance one token
 func (p *Parser) advance() token.Token {
-	if !p.is_at_end() {
+	if !p.isAtEnd() {
 		p.current += 1
 	}
 	return p.previous()
@@ -96,7 +96,7 @@ func (p *Parser) advance() token.Token {
 // Peek at next token without advancing
 // Returns last token if at end
 func (p *Parser) peek() token.Token {
-	if p.is_at_end() {
+	if p.isAtEnd() {
 		return p.previous()
 	}
 

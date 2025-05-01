@@ -25,7 +25,7 @@ func NewLexer(source []byte) Lexer {
 		position: 0,
 		row:      1,
 		col:      1,
-		keywords: get_keywords(),
+		keywords: getKeywords(),
 		tokens:   []token.Token{},
 		errors:   []error{},
 	}
@@ -34,14 +34,14 @@ func NewLexer(source []byte) Lexer {
 // Create tokens for entire source code
 func (l *Lexer) Tokenize() ([]token.Token, []error) {
 	for {
-		if l.is_at_end() {
+		if l.isAtEnd() {
 			break
 		}
 
-		l.read_token()
+		l.readToken()
 	}
 
-	l.add_token(token.EOF, "", 0)
+	l.addToken(token.EOF, "", 0)
 
 	if len(l.errors) != 0 {
 		return l.tokens, l.errors
@@ -51,18 +51,18 @@ func (l *Lexer) Tokenize() ([]token.Token, []error) {
 }
 
 // Create new token with length and add to tokens
-func (l *Lexer) add_token(kind token.TokenType, value string, length int) {
+func (l *Lexer) addToken(kind token.TokenType, value string, length int) {
 	l.tokens = append(l.tokens, token.NewToken(kind, value, l.row, l.col-length))
 }
 
-func (l *Lexer) is_at_end() bool {
+func (l *Lexer) isAtEnd() bool {
 	return l.position >= len(l.input)
 }
 
 // Peek next character in input
 // Returns nullbyte if at end
 func (l *Lexer) peek() byte {
-	if l.is_at_end() {
+	if l.isAtEnd() {
 		return '\000'
 	}
 
@@ -71,7 +71,7 @@ func (l *Lexer) peek() byte {
 
 // Peek two characters ahead in input
 // Returns nullbyte if at end
-func (l *Lexer) peek_next() byte {
+func (l *Lexer) peekNext() byte {
 	if l.position+1 == len(l.input) {
 		return '\000'
 	}
@@ -82,7 +82,7 @@ func (l *Lexer) peek_next() byte {
 // Check if c is next in input
 // Advances if found
 func (l *Lexer) expect(c byte) bool {
-	if l.is_at_end() || c != l.peek() {
+	if l.isAtEnd() || c != l.peek() {
 		return false
 	}
 
@@ -111,12 +111,12 @@ func (l *Lexer) advance() byte {
 }
 
 // Read and advance until next line in source code
-func (l *Lexer) read_line_comment() {
+func (l *Lexer) readLineComment() {
 	for l.peek() != '\n' && l.peek() != '\000' {
 		l.advance()
 	}
 
-	if l.is_at_end() {
+	if l.isAtEnd() {
 		return
 	}
 
@@ -125,12 +125,12 @@ func (l *Lexer) read_line_comment() {
 
 // Read and advance block comment
 // Report error if block comment not terminated
-func (l *Lexer) read_block_comment() {
+func (l *Lexer) readBlockComment() {
 	for l.peek() != '*' && l.peek() != '\000' {
 		l.advance()
 	}
 
-	if l.is_at_end() {
+	if l.isAtEnd() {
 		msg := fmt.Sprintf("Unterminated block comment at line: %d\n", l.row)
 		l.errors = append(l.errors, errors.New(msg))
 		return
@@ -143,11 +143,11 @@ func (l *Lexer) read_block_comment() {
 
 	// Found '*' but not '/'
 	// So read until next '*'
-	l.read_block_comment()
+	l.readBlockComment()
 }
 
 // Read next token
-func (l *Lexer) read_token() {
+func (l *Lexer) readToken() {
 	char := l.advance()
 	if char == '\000' {
 		return
@@ -155,183 +155,183 @@ func (l *Lexer) read_token() {
 
 	switch char {
 	case '(':
-		l.add_token(token.LEFT_PAREN, "(", 1)
+		l.addToken(token.LEFT_PAREN, "(", 1)
 		return
 	case ')':
-		l.add_token(token.RIGHT_PAREN, ")", 1)
+		l.addToken(token.RIGHT_PAREN, ")", 1)
 		return
 	case '{':
-		l.add_token(token.LEFT_BRACE, "{", 1)
+		l.addToken(token.LEFT_BRACE, "{", 1)
 		return
 	case '}':
-		l.add_token(token.RIGHT_BRACE, "}", 1)
+		l.addToken(token.RIGHT_BRACE, "}", 1)
 		return
 	case '[':
-		l.add_token(token.LEFT_BRACKET, "[", 1)
+		l.addToken(token.LEFT_BRACKET, "[", 1)
 		return
 	case ']':
-		l.add_token(token.RIGHT_BRACKET, "]", 1)
+		l.addToken(token.RIGHT_BRACKET, "]", 1)
 		return
 	case ',':
-		l.add_token(token.COMMA, ",", 1)
+		l.addToken(token.COMMA, ",", 1)
 		return
 	case ';':
-		l.add_token(token.SEMICOLON, ";", 1)
+		l.addToken(token.SEMICOLON, ";", 1)
 		return
 	case ':':
-		l.add_token(token.COLON, ":", 1)
+		l.addToken(token.COLON, ":", 1)
 		return
 	case '_':
-		l.add_token(token.UNDERSCORE, "_", 1)
+		l.addToken(token.UNDERSCORE, "_", 1)
 		return
 	case '+':
 		if l.expect('=') {
-			l.add_token(token.PLUS_EQUAL, "+=", 2)
+			l.addToken(token.PLUS_EQUAL, "+=", 2)
 		} else {
-			l.add_token(token.PLUS, "+", 1)
+			l.addToken(token.PLUS, "+", 1)
 		}
 		return
 	case '-':
 		if l.expect('=') {
-			l.add_token(token.MINUS_EQUAL, "-=", 2)
+			l.addToken(token.MINUS_EQUAL, "-=", 2)
 		} else if l.expect('>') {
-			l.add_token(token.MINUS_GREATER, "->", 2)
+			l.addToken(token.MINUS_GREATER, "->", 2)
 		} else {
-			l.add_token(token.MINUS, "-", 1)
+			l.addToken(token.MINUS, "-", 1)
 		}
 		return
 	case '/':
 		if l.expect('/') {
-			l.read_line_comment()
+			l.readLineComment()
 		} else if l.expect('*') {
-			l.read_block_comment()
+			l.readBlockComment()
 		} else if l.expect('=') {
-			l.add_token(token.SLASH_EQUAL, "/=", 2)
+			l.addToken(token.SLASH_EQUAL, "/=", 2)
 		} else {
-			l.add_token(token.SLASH, "/", 1)
+			l.addToken(token.SLASH, "/", 1)
 		}
 		return
 	case '%':
-		l.add_token(token.PERCENT, "%", 1)
+		l.addToken(token.PERCENT, "%", 1)
 		return
 	case '*':
 		if l.expect('*') {
 			if l.expect('=') {
-				l.add_token(token.STAR_STAR_EQUAL, "**=", 3)
+				l.addToken(token.STAR_STAR_EQUAL, "**=", 3)
 			} else {
-				l.add_token(token.STAR_STAR, "**", 2)
+				l.addToken(token.STAR_STAR, "**", 2)
 			}
 		} else if l.expect('=') {
-			l.add_token(token.STAR_EQUAL, "*=", 2)
+			l.addToken(token.STAR_EQUAL, "*=", 2)
 		} else {
-			l.add_token(token.STAR, "*", 1)
+			l.addToken(token.STAR, "*", 1)
 		}
 		return
 	case '!':
 		if l.expect('=') {
-			l.add_token(token.BANG_EQUAL, "!=", 2)
+			l.addToken(token.BANG_EQUAL, "!=", 2)
 		} else {
-			l.add_token(token.BANG, "!", 1)
+			l.addToken(token.BANG, "!", 1)
 		}
 		return
 	case '=':
 		if l.expect('=') {
-			l.add_token(token.EQUAL_EQUAL, "==", 2)
+			l.addToken(token.EQUAL_EQUAL, "==", 2)
 		} else {
-			l.add_token(token.EQUAL, "=", 1)
+			l.addToken(token.EQUAL, "=", 1)
 		}
 		return
 	case '>':
 		if l.expect('=') {
-			l.add_token(token.GREATER_EQUAL, ">=", 2)
+			l.addToken(token.GREATER_EQUAL, ">=", 2)
 		} else {
-			l.add_token(token.GREATER, ">", 1)
+			l.addToken(token.GREATER, ">", 1)
 		}
 		return
 	case '<':
 		if l.expect('=') {
-			l.add_token(token.LESS_EQUAL, "<=", 2)
+			l.addToken(token.LESS_EQUAL, "<=", 2)
 		} else {
-			l.add_token(token.LESS, "<", 1)
+			l.addToken(token.LESS, "<", 1)
 		}
 		return
 	case ' ', '\t', '\r', '\n':
 		return
 	case '&':
 		if l.expect('&') {
-			l.add_token(token.LAND, "&&", 2)
+			l.addToken(token.LAND, "&&", 2)
 		} else if l.expect('=') {
-			l.add_token(token.AND_EQUAL, "&=", 2)
+			l.addToken(token.AND_EQUAL, "&=", 2)
 		} else {
-			l.add_token(token.AND, "&", 1)
+			l.addToken(token.AND, "&", 1)
 		}
 		return
 	case '|':
 		if l.expect('|') {
-			l.add_token(token.LOR, "||", 2)
+			l.addToken(token.LOR, "||", 2)
 		} else if l.expect('=') {
-			l.add_token(token.OR_EQUAL, "|=", 2)
+			l.addToken(token.OR_EQUAL, "|=", 2)
 		} else {
-			l.add_token(token.OR, "|", 1)
+			l.addToken(token.OR, "|", 1)
 		}
 		return
 	case '~':
 		if l.expect('=') {
-			l.add_token(token.TILDE_EQUAL, "~=", 2)
+			l.addToken(token.TILDE_EQUAL, "~=", 2)
 		} else {
-			l.add_token(token.TILDE, "~", 1)
+			l.addToken(token.TILDE, "~", 1)
 		}
 		return
 	case '^':
 		if l.expect('=') {
-			l.add_token(token.CARET_EQUAL, "^=", 2)
+			l.addToken(token.CARET_EQUAL, "^=", 2)
 		} else {
-			l.add_token(token.CARET, "^", 1)
+			l.addToken(token.CARET, "^", 1)
 		}
 		return
 	case '\'':
-		s, ttype := l.read_char()
-		l.add_token(ttype, s, len(s)+2)
+		s, ttype := l.readChar()
+		l.addToken(ttype, s, len(s)+2)
 	case '"':
-		s, ttype := l.read_string()
+		s, ttype := l.readString()
 		var padding int
 		if ttype == token.STRING {
 			padding = 2
 		} else {
 			padding = 1
 		}
-		l.add_token(ttype, s, len(s)+padding)
+		l.addToken(ttype, s, len(s)+padding)
 		return
 	}
 
 	if unicode.IsLetter(rune(char)) {
-		s := l.read_identifier(char)
+		s := l.readIdentifier(char)
 		kw, ok := l.keywords[s]
 		if ok {
-			l.add_token(kw, s, len(s))
+			l.addToken(kw, s, len(s))
 		} else {
-			l.add_token(token.IDENT, s, len(s))
+			l.addToken(token.IDENT, s, len(s))
 		}
 		return
 	}
 
 	if unicode.IsDigit(rune(char)) {
-		num, ttype := l.read_number(char)
-		l.add_token(ttype, num, len(num))
+		num, ttype := l.readNumber(char)
+		l.addToken(ttype, num, len(num))
 		return
 	}
 
 	// TODO: Illegal token
 }
 
-func (l *Lexer) read_number(start byte) (string, token.TokenType) {
+func (l *Lexer) readNumber(start byte) (string, token.TokenType) {
 	var sb strings.Builder
 	sb.WriteByte(start)
 
 	valid := true
 	ttype := token.INTEGER
 
-	for peek := rune(l.peek()); unicode.IsDigit(peek) || (peek == '.' && unicode.IsDigit(rune(l.peek_next()))) || unicode.IsLetter(peek); {
+	for peek := rune(l.peek()); unicode.IsDigit(peek) || (peek == '.' && unicode.IsDigit(rune(l.peekNext()))) || unicode.IsLetter(peek); {
 		if unicode.IsLetter(peek) {
 			valid = false
 		}
@@ -358,7 +358,7 @@ func (l *Lexer) read_number(start byte) (string, token.TokenType) {
 }
 
 // Read identifier from input
-func (l *Lexer) read_identifier(start byte) string {
+func (l *Lexer) readIdentifier(start byte) string {
 	var sb strings.Builder
 	sb.WriteByte(start)
 
@@ -372,13 +372,13 @@ func (l *Lexer) read_identifier(start byte) string {
 
 // Read string from input
 // Returns error if string is unterminated
-func (l *Lexer) read_string() (string, token.TokenType) {
+func (l *Lexer) readString() (string, token.TokenType) {
 	var sb strings.Builder
-	for l.peek() != '"' && !l.is_at_end() {
+	for l.peek() != '"' && !l.isAtEnd() {
 		sb.WriteByte(l.advance())
 	}
 
-	if l.is_at_end() {
+	if l.isAtEnd() {
 		l.errors = append(l.errors, fmt.Errorf("Unterminated string at line %d", l.row))
 		return sb.String(), token.ILLEGAL
 	}
@@ -389,7 +389,7 @@ func (l *Lexer) read_string() (string, token.TokenType) {
 }
 
 // Read a character from input ('c')
-func (l *Lexer) read_char() (string, token.TokenType) {
+func (l *Lexer) readChar() (string, token.TokenType) {
 	char := l.advance()
 	if l.expect('\'') {
 		return string(char), token.CHAR
@@ -403,7 +403,7 @@ func (l *Lexer) read_char() (string, token.TokenType) {
 	var sb strings.Builder
 	sb.WriteByte(char)
 
-	for peek := l.peek(); peek != '\'' && !l.is_at_end(); {
+	for peek := l.peek(); peek != '\'' && !l.isAtEnd(); {
 		sb.WriteByte(l.advance())
 		peek = l.peek()
 	}
@@ -420,7 +420,7 @@ func (l *Lexer) read_char() (string, token.TokenType) {
 }
 
 // Returns map from strings to tokentype
-func get_keywords() map[string]token.TokenType {
+func getKeywords() map[string]token.TokenType {
 	return map[string]token.TokenType{
 		"false":    token.FALSE,
 		"true":     token.TRUE,
