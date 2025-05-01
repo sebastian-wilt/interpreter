@@ -320,7 +320,7 @@ func (p *Parser) primary() (ast.Expr, error) {
 		}, nil
 	}
 
-	literals := []token.TokenType{token.IDENT, token.INTEGER, token.REAL, token.STRING, token.TRUE, token.FALSE}
+	literals := []token.TokenType{token.INTEGER, token.REAL, token.STRING, token.TRUE, token.FALSE}
 	if p.expect(literals) {
 		token := p.previous()
 
@@ -328,6 +328,14 @@ func (p *Parser) primary() (ast.Expr, error) {
 			Pos:   token.Pos,
 			Kind:  token.Kind,
 			Value: token.Value,
+		}, nil
+	}
+
+	if p.check(token.IDENT) {
+		ident := p.advance()
+		return &ast.Ident{
+			Pos:  ident.Pos,
+			Name: ident.Value,
 		}, nil
 	}
 
