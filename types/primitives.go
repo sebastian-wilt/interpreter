@@ -31,7 +31,7 @@ func (p *Primitive) Name() string {
 }
 
 func (p *Primitive) String() string {
-	return TypeString(p)
+	return typeString(p)
 }
 
 func NewChar() *Primitive {

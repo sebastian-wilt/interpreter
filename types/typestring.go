@@ -1,6 +1,6 @@
 package types
 
-func TypeString(t Type) string {
+func typeString(t Type) string {
 	switch t.(type) {
 
 	case *Primitive:
