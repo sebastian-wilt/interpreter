@@ -9,8 +9,8 @@ func intPow(left int, right int) int {
 		return left
 	}
 
-	result := left
-	for i := 2; i < right; i++ {
+	result := 1
+	for range right {
 		result *= left
 	}
 	return result

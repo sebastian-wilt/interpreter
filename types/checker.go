@@ -26,7 +26,7 @@ func (c *Checker) checkExpr(expr ast.Expr) Type {
 	case *ast.BinaryExpr:
 		c.checkBinaryExpr(n)
 	case *ast.GroupingExpr:
-		c.checkExpr(n)
+		c.checkExpr(n.Expr)
 	case *ast.Ident:
 	case *ast.LiteralExpr:
 		return c.checkLiteralExpr(n)
