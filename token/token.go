@@ -33,7 +33,6 @@ const (
 	COMMA                          // ,
 	SEMICOLON                      // ;
 	COLON                          // :
-	PERCENT                        // %
 	UNDERSCORE                     // _
 
 	// Operators (1-3 characters)
@@ -56,6 +55,7 @@ const (
 	GREATER_EQUAL   // >=
 	LESS            // <
 	LESS_EQUAL      // <=
+	PERCENT         // %
 
 	LAND        // &&
 	LOR         // ||

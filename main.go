@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"interpreter/interpret"
 	"interpreter/lexer"
 	"interpreter/parser"
+	"interpreter/types"
 	"os"
 
 	"github.com/chzyer/readline"
@@ -32,11 +34,11 @@ func repl() {
 				fmt.Printf("Error: %s\n", err)
 			}
 		}
-
-		fmt.Printf("Tokens: \n")
-		for _, tok := range tokens {
-			fmt.Printf("%v\n", tok)	
-		}
+		
+		// fmt.Printf("Tokens: \n")
+		// for _, tok := range tokens {
+		// 	fmt.Printf("%v\n", tok)
+		// }
 
 		parser := parser.NewParser(tokens)
 		root, errors := parser.Parse()
@@ -48,7 +50,22 @@ func repl() {
 			continue
 		}
 
-		fmt.Printf("%v\n", root)
+		// fmt.Printf("%v\n", root)
+
+		typechecker := types.Checker{
+			Errors: make([]error, 0),
+		}
+		ok := typechecker.Visit(root)
+		if !ok {
+			fmt.Println("Got typerrors: ")
+			for _, err := range typechecker.Errors {
+				fmt.Printf("%v\n", err)
+			}
+			continue
+		}
+
+		interpreter := interpret.Interpreter{}
+		interpreter.Visit(root)
 	}
 
 }
