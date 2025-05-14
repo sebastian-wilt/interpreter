@@ -19,8 +19,8 @@ type Lexer struct {
 }
 
 // Create new lexer with source as text
-func NewLexer(source []byte) Lexer {
-	return Lexer{
+func NewLexer(source []byte) *Lexer {
+	return &Lexer{
 		input:    source,
 		position: 0,
 		row:      1,

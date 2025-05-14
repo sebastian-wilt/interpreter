@@ -1,8 +1,8 @@
 package ast
 
 import (
-	"interpreter/token"
 	"fmt"
+	"interpreter/token"
 )
 
 type Node interface {
@@ -76,8 +76,9 @@ func (e *UnaryExpr) exprNode()      {}
 type (
 	VarDeclaration struct {
 		Pos      token.Position  // Position of decl type
+		Name     token.Token     // Identifier for variable
 		DeclType token.TokenType // Declaration type: i.e. "val" or "var"
-		Type     token.TokenType // TODO: Represent type
+		Type     *token.Token     // TODO: Represent type
 		Value    Expr            // Initial value of variable (can be nil)
 	}
 

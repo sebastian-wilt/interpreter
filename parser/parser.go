@@ -29,8 +29,8 @@ type Parser struct {
 	errors  []error       // Parse errors
 }
 
-func NewParser(tokens []token.Token) Parser {
-	return Parser{
+func NewParser(tokens []token.Token) *Parser {
+	return &Parser{
 		tokens:  tokens,
 		current: 0,
 		errors:  []error{},
@@ -38,10 +38,20 @@ func NewParser(tokens []token.Token) Parser {
 }
 
 // Parse entire input
-// Returns root node of AST
-func (p *Parser) Parse() (ast.Expr, []error) {
-	root, _ := p.expression()
-	return root, p.errors
+// Returns list of statements
+func (p *Parser) Parse() ([]ast.Stmt, []error) {
+	statements := []ast.Stmt{}
+
+	for !p.isAtEnd() {
+		statement, err := p.statement()
+		if err != nil {
+			p.synchronize()
+		} else {
+			statements = append(statements, statement)
+		}
+	}
+
+	return statements, p.errors
 }
 
 // Checks if next token is one of tokens
@@ -63,9 +73,10 @@ func (p *Parser) check(kind token.TokenType) bool {
 	return kind == p.tokens[p.current].Kind
 }
 
-// Advance parser one token if kind is next token
+// Advance parser one token if kind is next token.
 // Returns error without advancing if not found
 func (p *Parser) consume(kind token.TokenType) (token.Token, error) {
+	// TODO: Rewrite error messages to include filename:line - msg
 	if p.check(kind) {
 		return p.advance(), nil
 	}
@@ -75,7 +86,7 @@ func (p *Parser) consume(kind token.TokenType) (token.Token, error) {
 }
 
 func (p *Parser) isAtEnd() bool {
-	return p.current == len(p.tokens)
+	return p.current == len(p.tokens) || p.tokens[p.current].Kind == token.EOF
 }
 
 // Create error with message and add to list of errors
@@ -106,6 +117,134 @@ func (p *Parser) peek() token.Token {
 // Return previous token
 func (p *Parser) previous() token.Token {
 	return p.tokens[p.current-1]
+}
+
+// Skip until next statement
+// Used when encountering a parse error
+func (p *Parser) synchronize() {
+	p.advance()
+	for !p.isAtEnd() {
+		if p.previous().Kind == token.SEMICOLON {
+			return
+		}
+
+		stmt_start := []token.TokenType{token.FOR, token.FUN, token.IF, token.RETURN, token.VAR, token.VAL, token.WHILE}
+		if slices.Contains(stmt_start, p.peek().Kind) {
+			return
+		}
+
+		p.advance()
+	}
+}
+
+func (p *Parser) statement() (ast.Stmt, error) {
+	if p.expect([]token.TokenType{token.VAL, token.VAR}) {
+		return p.variableDeclaration()
+	}
+
+	if p.expect([]token.TokenType{token.LEFT_BRACE}) {
+		left_brace := p.previous()
+
+		statements, err := p.block()
+		if err != nil {
+			return nil, err
+		}
+
+		return &ast.BlockStmt{
+			Pos:   left_brace.Pos,
+			Stmts: statements,
+		}, nil
+	}
+
+	return p.expressionStatement()
+}
+
+// Parse variable declaration
+func (p *Parser) variableDeclaration() (ast.Stmt, error) {
+	decl := p.previous()
+
+	name, err := p.consume(token.IDENT)
+	if err != nil {
+		return nil, err
+	}
+
+	var var_type *token.Token
+	var_type = nil
+
+	if p.expect([]token.TokenType{token.COLON}) {
+		t, err := p.consume(token.IDENT)
+		var_type = &t
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var initial_value ast.Expr
+	initial_value = nil
+
+	if p.expect([]token.TokenType{token.EQUAL}) {
+		initial_value, err = p.expression()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if var_type == nil && initial_value == nil {
+		return nil, p.error(fmt.Sprintf("Variable needs either type or initial value at line %d", decl.Pos.Row))
+	}
+
+	stmt := &ast.VarDeclaration{
+		Pos:      decl.Pos,
+		Name:     name,
+		DeclType: decl.Kind,
+		Type:     var_type,
+		Value:    initial_value,
+	}
+
+	_, err = p.consume(token.SEMICOLON)
+	if err != nil {
+		return nil, err
+	}
+
+	return stmt, nil
+}
+
+// Parse block scope
+// Used for all block scopes
+func (p *Parser) block() ([]ast.Stmt, error) {
+	statements := []ast.Stmt{}
+
+	for !(p.check(token.RIGHT_BRACE) || p.isAtEnd()) {
+		statement, err := p.statement()
+		if err != nil {
+			return nil, err
+		}
+
+		statements = append(statements, statement)
+	}
+
+	p.consume(token.RIGHT_BRACE)
+	return statements, nil
+}
+
+// Parse expressions statement
+func (p *Parser) expressionStatement() (ast.Stmt, error) {
+	expr, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.consume(token.SEMICOLON)
+	if err != nil {
+		return nil, err
+	}
+
+	stmt := &ast.ExprStmt{
+		Pos:  expr.Position(),
+		Expr: expr,
+	}
+
+	return stmt, nil
 }
 
 /*
@@ -339,5 +478,5 @@ func (p *Parser) primary() (ast.Expr, error) {
 		}, nil
 	}
 
-	return nil, p.error(fmt.Sprintf("Expected expression at line %d", p.peek().Pos.Row))
+	return nil, p.error(fmt.Sprintf("Expected expression at line %d col %d", p.peek().Pos.Row, p.peek().Pos.Column))
 }
