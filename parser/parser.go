@@ -195,7 +195,7 @@ func (p *Parser) variableDeclaration() (ast.Stmt, error) {
 
 	stmt := &ast.VarDeclaration{
 		Pos:      decl.Pos,
-		Name:     name,
+		Name:     name.Value,
 		DeclType: decl.Kind,
 		Type:     var_type,
 		Value:    initial_value,

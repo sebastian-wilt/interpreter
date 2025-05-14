@@ -1,86 +1,80 @@
-package value
-
-import "interpreter/types"
+package interpret
 
 // Primitive values
 type Integer struct {
-	t     types.Type
 	Value int
 }
 
 type Real struct {
-	t     types.Type
 	Value float64
 }
 
 type String struct {
-	t     types.Type
 	Value string
 }
 
 type Char struct {
-	t     types.Type
 	Value rune
 }
 
 type Boolean struct {
-	t     types.Type
 	Value bool
 }
 
 // Implement Value interface for primitives
-func (i *Integer) Type() types.Type {
-	return i.t
+func (i *Integer) Name() string {
+	return "int"
 }
 
-func (r *Real) Type() types.Type {
-	return r.t
+func (r *Real) Name() string {
+	return "real"
 }
 
-func (s *String) Type() types.Type {
-	return s.t
+func (s *String) Name() string {
+	return "string"
 }
 
-func (c *Char) Type() types.Type {
-	return c.t
+func (c *Char) Name() string {
+	return "char"
 }
 
-func (b *Boolean) Type() types.Type {
-	return b.t
+func (b *Boolean) Name() string {
+	return "boolean"
 }
+
+func (i *Integer) value() {}
+func (r *Real) value()    {}
+func (s *String) value()  {}
+func (c *Char) value()    {}
+func (b *Boolean) value() {}
 
 // Constructors
 func NewChar(c rune) Value {
 	return &Char{
-		t:     types.NewChar(),
 		Value: c,
 	}
 }
 
 func NewInteger(i int) Value {
 	return &Integer{
-		t:     types.NewInteger(),
 		Value: i,
 	}
 }
 
 func NewReal(r float64) Value {
 	return &Real{
-		t:     types.NewReal(),
 		Value: r,
 	}
 }
 
 func NewString(s string) Value {
 	return &String{
-		t:     types.NewString(),
 		Value: s,
 	}
 }
 
-func NewBool(b bool) Value {
+func NewBoolean(b bool) Value {
 	return &Boolean{
-		t:     types.NewBool(),
 		Value: b,
 	}
 }

@@ -76,10 +76,10 @@ func (e *UnaryExpr) exprNode()      {}
 type (
 	VarDeclaration struct {
 		Pos      token.Position  // Position of decl type
-		Name     token.Token     // Identifier for variable
+		Name     string          // Identifier for variable
 		DeclType token.TokenType // Declaration type: i.e. "val" or "var"
-		Type     *token.Token     // TODO: Represent type
-		Value    Expr            // Initial value of variable (can be nil)
+		Type     *token.Token    // Name of type (optional)
+		Value    Expr            // Initial value of variable (optional)
 	}
 
 	ExprStmt struct {
