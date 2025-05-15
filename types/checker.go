@@ -32,13 +32,7 @@ func (c *Checker) Visit(program []ast.Stmt) bool {
 // Collect all top level symbols (functions, types)
 // and save in symbol table
 func (c *Checker) collectTopLevelSymbols(statements []ast.Stmt) {
-	for _, s := range statements {
-		switch s.(type) {
-		case *ast.BlockStmt, *ast.ExprStmt, *ast.VarDeclaration:
-			continue
-		default:
-			panic(fmt.Sprintf("unexpected ast.Stmt: %#v", s))
-		}
+	for range statements {
 	}
 }
 
@@ -51,6 +45,8 @@ func (c *Checker) checkStmt(stmt ast.Stmt) bool {
 		return c.checkExpr(n.Expr) != nil
 	case *ast.VarDeclaration:
 		return c.checkVarDeclaration(n)
+	case *ast.AssignmentStmt:
+		return c.checkAssignment(n)
 	default:
 		panic(fmt.Sprintf("unexpected ast.Stmt: %#v", n))
 	}
@@ -110,10 +106,45 @@ func (c *Checker) checkVarDeclaration(stmt *ast.VarDeclaration) bool {
 	return true
 }
 
+// Typecheck assignments
+func (c *Checker) checkAssignment(stmt *ast.AssignmentStmt) bool {
+	sym := c.context.lookup(stmt.Name)
+	if sym == nil {
+		c.error(fmt.Sprintf("Undefined identifier: %s", stmt.Name))
+		return false
+	}
+
+	t := c.checkExpr(stmt.Value)
+	if t == nil {
+		return false
+	}
+
+	// Check correct type
+	if sym.Type() != t {
+		c.error(fmt.Sprintf("Cannot assign %s to variable of type %s", t.Name(), sym.Type().Name()))
+		return false
+	}
+
+	switch v := sym.(type) {
+	case *function:
+	case *variable:
+		// Disallow assignment if variable is not mutable
+		// unless variable is not initialized
+		if !v.mutable && v.initialized {
+			c.error(fmt.Sprintf("Cannot assign to immutable variable %s", stmt.Name))
+			return false
+		}
+		v.initialized = true
+	default:
+		panic(fmt.Sprintf("unexpected types.symbol: %#v", v))
+	}
+
+	return true
+}
+
 // Typecheck expressions
 func (c *Checker) checkExpr(expr ast.Expr) Type {
 	switch n := expr.(type) {
-	case *ast.AssignmentExpr:
 	case *ast.BinaryExpr:
 		return c.checkBinaryExpr(n)
 	case *ast.GroupingExpr:
@@ -127,8 +158,6 @@ func (c *Checker) checkExpr(expr ast.Expr) Type {
 	default:
 		panic(fmt.Sprintf("unexpected ast.Expr: %#v", n))
 	}
-
-	return nil
 }
 
 // Typecheck identifiers

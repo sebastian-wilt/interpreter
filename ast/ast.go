@@ -40,12 +40,6 @@ type (
 		Right Expr           // Right operand
 	}
 
-	AssignmentExpr struct {
-		Pos   token.Position // Position of identifier
-		Name  Ident          // Identifier to assign
-		Value Expr           // Value to assign to identifier
-	}
-
 	GroupingExpr struct {
 		Pos  token.Position // Position of left paren
 		Expr Expr           // Expression inside parenthesis
@@ -58,19 +52,17 @@ type (
 	}
 )
 
-func (e *Ident) Position() token.Position          { return e.Pos }
-func (e *LiteralExpr) Position() token.Position    { return e.Pos }
-func (e *BinaryExpr) Position() token.Position     { return e.Pos }
-func (e *AssignmentExpr) Position() token.Position { return e.Pos }
-func (e *GroupingExpr) Position() token.Position   { return e.Pos }
-func (e *UnaryExpr) Position() token.Position      { return e.Pos }
+func (e *Ident) Position() token.Position        { return e.Pos }
+func (e *LiteralExpr) Position() token.Position  { return e.Pos }
+func (e *BinaryExpr) Position() token.Position   { return e.Pos }
+func (e *GroupingExpr) Position() token.Position { return e.Pos }
+func (e *UnaryExpr) Position() token.Position    { return e.Pos }
 
-func (e *Ident) exprNode()          {}
-func (e *LiteralExpr) exprNode()    {}
-func (e *BinaryExpr) exprNode()     {}
-func (e *AssignmentExpr) exprNode() {}
-func (e *GroupingExpr) exprNode()   {}
-func (e *UnaryExpr) exprNode()      {}
+func (e *Ident) exprNode()        {}
+func (e *LiteralExpr) exprNode()  {}
+func (e *BinaryExpr) exprNode()   {}
+func (e *GroupingExpr) exprNode() {}
+func (e *UnaryExpr) exprNode()    {}
 
 // Statements
 type (
@@ -91,12 +83,20 @@ type (
 		Pos   token.Position // Position of start brace
 		Stmts []Stmt         // Statements inside block
 	}
+
+	AssignmentStmt struct {
+		Pos   token.Position // Position of identifier
+		Name  string         // Identifier to assign
+		Value Expr           // Value to assign to identifier
+	}
 )
 
 func (s *VarDeclaration) Position() token.Position { return s.Pos }
 func (s *ExprStmt) Position() token.Position       { return s.Pos }
 func (s *BlockStmt) Position() token.Position      { return s.Pos }
+func (e *AssignmentStmt) Position() token.Position { return e.Pos }
 
 func (s *VarDeclaration) stmtNode() {}
 func (s *ExprStmt) stmtNode()       {}
 func (s *BlockStmt) stmtNode()      {}
+func (e *AssignmentStmt) stmtNode() {}

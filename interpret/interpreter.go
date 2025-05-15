@@ -27,15 +27,7 @@ func (i *Interpreter) Visit(program []ast.Stmt) {
 }
 
 func (i *Interpreter) collectTypesAndFunctions(program []ast.Stmt) {
-	for _, s := range program {
-		switch stmt := s.(type) {
-		case *ast.BlockStmt:
-			i.collectTypesAndFunctions(stmt.Stmts)
-		case *ast.ExprStmt:
-		case *ast.VarDeclaration:
-		default:
-			panic(fmt.Sprintf("unexpected ast.Stmt: %#v", stmt))
-		}
+	for range program {
 	}
 }
 
@@ -62,6 +54,8 @@ func (i *Interpreter) executeStmt(node ast.Stmt) {
 		}
 	case *ast.VarDeclaration:
 		i.executeVarDeclaration(stmt)
+	case *ast.AssignmentStmt:
+		i.executeAssignment(stmt)
 	default:
 		panic(fmt.Sprintf("unexpected ast.Stmt: %#v", stmt))
 	}
@@ -96,10 +90,15 @@ func (i *Interpreter) executeVarDeclaration(stmt *ast.VarDeclaration) {
 	i.env.define(stmt.Name, v)
 }
 
+// Execute assignment
+func (i *Interpreter) executeAssignment(stmt *ast.AssignmentStmt) {
+	v := i.evaluateExpr(stmt.Value)
+	i.env.assign(stmt.Name, v)
+}
+
 // Evaluate expressions
 func (i *Interpreter) evaluateExpr(node ast.Expr) Value {
 	switch n := node.(type) {
-	case *ast.AssignmentExpr:
 	case *ast.BinaryExpr:
 		return i.evaluateBinaryExpr(n)
 	case *ast.GroupingExpr:
@@ -113,8 +112,6 @@ func (i *Interpreter) evaluateExpr(node ast.Expr) Value {
 	default:
 		panic(fmt.Sprintf("unexpected ast.Expr: %#v", node))
 	}
-
-	return nil
 }
 
 // Evaluate identfiers expression

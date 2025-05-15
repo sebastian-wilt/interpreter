@@ -227,10 +227,36 @@ func (p *Parser) block() ([]ast.Stmt, error) {
 	return statements, nil
 }
 
-// Parse expressions statement
+// Parse expression statement
 func (p *Parser) expressionStatement() (ast.Stmt, error) {
 	expr, err := p.expression()
 	if err != nil {
+		return nil, err
+	}
+
+	// Parse assignment
+	if p.expect([]token.TokenType{token.EQUAL}) {
+		value, err := p.expression()
+		if err != nil {
+			return nil, err
+		}
+
+		if ident, ok := expr.(*ast.Ident); ok {
+			_, err = p.consume(token.SEMICOLON)
+			if err != nil {
+				return nil, err
+			}
+
+			assignment := &ast.AssignmentStmt{
+				Pos:   ident.Position(),
+				Name:  ident.Name,
+				Value: value,
+			}
+
+			return assignment, nil
+		}
+
+		err = p.error(fmt.Sprintf("Invalid assignment target at line %d", expr.Position().Row))
 		return nil, err
 	}
 
@@ -250,8 +276,7 @@ func (p *Parser) expressionStatement() (ast.Stmt, error) {
 /*
 Precedence:
 
-	expression ::= assignment;
-	assignment ::= IDENTIFIER "=" assignment | equality;
+	expression ::= equality;
 	equality ::= comparison ( ( "!=" | "==") comparison)*;
 	comparison ::= term ( ( ">" | ">=" | "<=" | "<") term)*;
 	term ::= factor ( ( "-" | "+" ) factor)*;
@@ -263,34 +288,7 @@ Precedence:
 
 // Parse expression
 func (p *Parser) expression() (ast.Expr, error) {
-	return p.assignment()
-}
-
-// Parse expressions with same precedence as assignments
-func (p *Parser) assignment() (ast.Expr, error) {
-	equality, err := p.equality()
-	if err != nil {
-		return nil, err
-	}
-
-	if p.expect([]token.TokenType{token.EQUAL}) {
-		value, err := p.assignment()
-		if err != nil {
-			return nil, err
-		}
-
-		if ident, ok := equality.(*ast.Ident); ok {
-			return &ast.AssignmentExpr{
-				Pos:   ident.Position(),
-				Name:  *ident,
-				Value: value,
-			}, nil
-		}
-
-		return &ast.AssignmentExpr{}, p.error(fmt.Sprintf("Invalid assignment target at line %d.", equality.Position().Row))
-	}
-
-	return equality, nil
+	return p.equality()
 }
 
 // Parse expressions with same precedence as equality.
