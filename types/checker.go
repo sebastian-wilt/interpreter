@@ -9,12 +9,14 @@ import (
 )
 
 type Checker struct {
+	file    string
 	Errors  []error
 	context *context
 }
 
-func NewChecker() *Checker {
+func NewChecker(file string) *Checker {
 	return &Checker{
+		file:    file,
 		Errors:  []error{},
 		context: newContext(),
 	}
@@ -81,7 +83,7 @@ func (c *Checker) checkVarDeclaration(stmt *ast.VarDeclaration) bool {
 		// Lookup type in symbol table
 		declared_type, ok := c.context.types[stmt.Type.Value]
 		if !ok {
-			c.error(fmt.Sprintf("Undefined type: %s", stmt.Type.Value))
+			c.error(fmt.Sprintf("Undefined type: %s", stmt.Type.Value), stmt)
 			return false
 		}
 
@@ -89,7 +91,7 @@ func (c *Checker) checkVarDeclaration(stmt *ast.VarDeclaration) bool {
 		if stmt.Value != nil {
 			inferred := c.checkExpr(stmt.Value)
 			if inferred != declared_type {
-				c.error(fmt.Sprintf("Inferred type does not match declared type"))
+				c.error(fmt.Sprintf("Inferred type does not match declared type"), stmt)
 			}
 		}
 
@@ -110,7 +112,7 @@ func (c *Checker) checkVarDeclaration(stmt *ast.VarDeclaration) bool {
 func (c *Checker) checkAssignment(stmt *ast.AssignmentStmt) bool {
 	sym := c.context.lookup(stmt.Name)
 	if sym == nil {
-		c.error(fmt.Sprintf("Undefined identifier: %s", stmt.Name))
+		c.error(fmt.Sprintf("Undefined identifier: %s", stmt.Name), stmt)
 		return false
 	}
 
@@ -121,7 +123,7 @@ func (c *Checker) checkAssignment(stmt *ast.AssignmentStmt) bool {
 
 	// Check correct type
 	if sym.Type() != t {
-		c.error(fmt.Sprintf("Cannot assign %s to variable of type %s", t.Name(), sym.Type().Name()))
+		c.error(fmt.Sprintf("Cannot assign %s to variable of type %s", t.Name(), sym.Type().Name()), stmt)
 		return false
 	}
 
@@ -131,7 +133,7 @@ func (c *Checker) checkAssignment(stmt *ast.AssignmentStmt) bool {
 		// Disallow assignment if variable is not mutable
 		// unless variable is not initialized
 		if !v.mutable && v.initialized {
-			c.error(fmt.Sprintf("Cannot assign to immutable variable %s", stmt.Name))
+			c.error(fmt.Sprintf("Cannot assign to immutable variable %s", stmt.Name), stmt)
 			return false
 		}
 		v.initialized = true
@@ -164,7 +166,7 @@ func (c *Checker) checkExpr(expr ast.Expr) Type {
 func (c *Checker) checkIdent(expr *ast.Ident) Type {
 	sym := c.context.lookup(expr.Name)
 	if sym == nil {
-		c.error(fmt.Sprintf("Undefined identifier: %s", expr.Name))
+		c.error(fmt.Sprintf("Undefined identifier: %s", expr.Name), expr)
 		return nil
 	}
 
@@ -172,7 +174,7 @@ func (c *Checker) checkIdent(expr *ast.Ident) Type {
 	case *function:
 	case *variable:
 		if !v.initialized {
-			c.error(fmt.Sprintf("Identifier used before intialized: %s", v.name))
+			c.error(fmt.Sprintf("Identifier used before intialized: %s", v.name), expr)
 			return nil
 		}
 	default:
@@ -329,8 +331,8 @@ func (c *Checker) checkBinaryExpr(expr *ast.BinaryExpr) Type {
 }
 
 // Create type error with message
-func (c *Checker) error(message string) {
-	err := errors.New(message)
+func (c *Checker) error(message string, node ast.Node) {
+	err := errors.New(fmt.Sprintf("%s:%d:%d - %s", c.file, node.Position().Row, node.Position().Column, message))
 	c.Errors = append(c.Errors, err)
 }
 
@@ -345,7 +347,7 @@ func (c *Checker) operatorError(expr ast.Expr) {
 	default:
 		panic(fmt.Sprintf("unexpected ast.Expr: %#v", expr))
 	}
-	c.error(message)
+	c.error(message, expr)
 }
 
 // Enter new synctactic block

@@ -9,6 +9,7 @@ import (
 )
 
 type Lexer struct {
+	file     string                     // Name of file
 	input    []byte                     // Source code
 	position int                        // Position in source code
 	row      int                        // Row in source code
@@ -19,8 +20,9 @@ type Lexer struct {
 }
 
 // Create new lexer with source as text
-func NewLexer(source []byte) *Lexer {
+func NewLexer(source []byte, file string) *Lexer {
 	return &Lexer{
+		file:     file,
 		input:    source,
 		position: 0,
 		row:      1,
@@ -41,7 +43,7 @@ func (l *Lexer) Tokenize() ([]token.Token, []error) {
 		l.readToken()
 	}
 
-	l.addToken(token.EOF, "", 0)
+	l.addToken(token.EOF, "EOF", 0)
 
 	if len(l.errors) != 0 {
 		return l.tokens, l.errors
@@ -131,8 +133,7 @@ func (l *Lexer) readBlockComment() {
 	}
 
 	if l.isAtEnd() {
-		msg := fmt.Sprintf("Unterminated block comment at line: %d\n", l.row)
-		l.errors = append(l.errors, errors.New(msg))
+		l.error("Unterminated block comment")
 		return
 	}
 
@@ -292,6 +293,7 @@ func (l *Lexer) readToken() {
 	case '\'':
 		s, ttype := l.readChar()
 		l.addToken(ttype, s, len(s)+2)
+		return
 	case '"':
 		s, ttype := l.readString()
 		var padding int
@@ -321,7 +323,7 @@ func (l *Lexer) readToken() {
 		return
 	}
 
-	// TODO: Illegal token
+	l.error("Illegal token")
 }
 
 func (l *Lexer) readNumber(start byte) (string, token.TokenType) {
@@ -349,8 +351,7 @@ func (l *Lexer) readNumber(start byte) (string, token.TokenType) {
 	}
 
 	if !valid {
-		msg := fmt.Sprintf("Invalid literal at line %d\n", l.row)
-		l.errors = append(l.errors, errors.New(msg))
+		l.error("Invalid literal")
 		return sb.String(), token.ILLEGAL
 	}
 
@@ -379,7 +380,7 @@ func (l *Lexer) readString() (string, token.TokenType) {
 	}
 
 	if l.isAtEnd() {
-		l.errors = append(l.errors, fmt.Errorf("Unterminated string at line %d", l.row))
+		l.error("Unterminated string")
 		return sb.String(), token.ILLEGAL
 	}
 
@@ -396,7 +397,7 @@ func (l *Lexer) readChar() (string, token.TokenType) {
 	}
 
 	if char == '\'' {
-		l.errors = append(l.errors, fmt.Errorf("Empty char literal at line %d", l.row))
+		l.error("Empty char literal")
 		return "", token.ILLEGAL
 	}
 
@@ -410,13 +411,18 @@ func (l *Lexer) readChar() (string, token.TokenType) {
 
 	if l.peek() == '\'' {
 		l.advance()
-		l.errors = append(l.errors, fmt.Errorf("Invalid char literal at line %d\n", l.row))
+		l.error("Invalid char literal")
 		return sb.String(), token.ILLEGAL
 	}
 
-	l.errors = append(l.errors, fmt.Errorf("Unterminated char literal at line %d\n", l.row))
+	l.error("Unterminated char literal")
 
 	return sb.String(), token.ILLEGAL
+}
+
+func (l *Lexer) error(message string) {
+	err := errors.New(fmt.Sprintf("%s:%d:%d - %s", l.file, l.row, l.col, message))
+	l.errors = append(l.errors, err)
 }
 
 // Returns map from strings to tokentype

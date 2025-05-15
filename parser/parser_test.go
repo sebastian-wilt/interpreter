@@ -10,7 +10,7 @@ import (
 func TestUnaryExpression(t *testing.T) {
 	input := "-5"
 
-	lexer := lexer.NewLexer([]byte(input))
+	lexer := lexer.NewLexer([]byte(input), "test")
 	tokens, errors := lexer.Tokenize()
 	if len(errors) != 0 {
 		t.Log("Expected no lexer errors")
@@ -22,7 +22,7 @@ func TestUnaryExpression(t *testing.T) {
 		t.FailNow()
 	}
 
-	parser := NewParser(tokens)
+	parser := NewParser(tokens, "test")
 	expr, err := parser.expression()
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -38,7 +38,7 @@ func TestUnaryExpression(t *testing.T) {
 func TestBinaryExpression(t *testing.T) {
 	input := "10 * 25"
 
-	lexer := lexer.NewLexer([]byte(input))
+	lexer := lexer.NewLexer([]byte(input), "test")
 	tokens, errors := lexer.Tokenize()
 	if len(errors) != 0 {
 		t.Log("Expected no lexer errors")
@@ -50,7 +50,7 @@ func TestBinaryExpression(t *testing.T) {
 		t.FailNow()
 	}
 
-	parser := NewParser(tokens)
+	parser := NewParser(tokens, "test")
 	expr, err := parser.expression()
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -69,7 +69,7 @@ func TestBinaryExpression(t *testing.T) {
 func TestNestedExpression(t *testing.T) {
 	input := "1 + 2 + 3"
 
-	lexer := lexer.NewLexer([]byte(input))
+	lexer := lexer.NewLexer([]byte(input), "test")
 	tokens, errors := lexer.Tokenize()
 	if len(errors) != 0 {
 		t.Log("Expected no lexer errors")
@@ -81,7 +81,7 @@ func TestNestedExpression(t *testing.T) {
 		t.FailNow()
 	}
 
-	parser := NewParser(tokens)
+	parser := NewParser(tokens, "test")
 	expr, err := parser.expression()
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)

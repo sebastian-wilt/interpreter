@@ -9,7 +9,7 @@ import (
 func TestKeywords(t *testing.T) {
 	input := "if else false true for in while fun return val var continue fall match"
 
-	lexer := NewLexer([]byte(input))
+	lexer := NewLexer([]byte(input), "test")
 	tokens, errors := lexer.Tokenize()
 	if len(errors) != 0 {
 		for _, err := range errors {
@@ -90,7 +90,7 @@ func TestKeywords(t *testing.T) {
 		},
 		{
 			Kind:  token.EOF,
-			Value: "",
+			Value: "EOF",
 			Pos:   token.Position{},
 		},
 	}
@@ -101,7 +101,7 @@ func TestKeywords(t *testing.T) {
 func TestNumber(t *testing.T) {
 	input := "123.3 1991we723 2345 123.4.5.5"
 
-	lexer := NewLexer([]byte(input))
+	lexer := NewLexer([]byte(input), "test")
 	tokens, errors := lexer.Tokenize()
 	if len(errors) != 0 {
 		for _, err := range errors {
@@ -132,7 +132,7 @@ func TestNumber(t *testing.T) {
 		},
 		{
 			Kind:  token.EOF,
-			Value: "",
+			Value: "EOF",
 			Pos:   token.Position{},
 		},
 	}
@@ -143,7 +143,7 @@ func TestNumber(t *testing.T) {
 func TestStringsAndChars(t *testing.T) {
 	input := "\"Hello world\" 'c' 'a' 'invalid'"
 
-	lexer := NewLexer([]byte(input))
+	lexer := NewLexer([]byte(input), "test")
 	tokens, errors := lexer.Tokenize()
 	if len(errors) != 0 {
 		for _, err := range errors {
@@ -174,7 +174,7 @@ func TestStringsAndChars(t *testing.T) {
 		},
 		{
 			Kind:  token.EOF,
-			Value: "",
+			Value: "EOF",
 			Pos:   token.Position{},
 		},
 	}
@@ -186,7 +186,7 @@ func TestStringsAndChars(t *testing.T) {
 func TestSymbols(t *testing.T) {
 	input := "(){}[],;:_"
 
-	lexer := NewLexer([]byte(input))
+	lexer := NewLexer([]byte(input), "test")
 	tokens, errors := lexer.Tokenize()
 	if len(errors) != 0 {
 		for _, err := range errors {
@@ -247,7 +247,7 @@ func TestSymbols(t *testing.T) {
 		},
 		{
 			Kind:  token.EOF,
-			Value: "",
+			Value: "EOF",
 			Pos:   token.Position{},
 		},
 	}
@@ -261,7 +261,7 @@ func TestOperators(t *testing.T) {
 			  != = == > >= < <= && || & &= | |=
 			  ~ ~= ^ ^= %`
 
-	lexer := NewLexer([]byte(input))
+	lexer := NewLexer([]byte(input), "test")
 	tokens, errors := lexer.Tokenize()
 	if len(errors) != 0 {
 		for _, err := range errors {
@@ -422,7 +422,7 @@ func TestOperators(t *testing.T) {
 		},
 		{
 			Kind:  token.EOF,
-			Value: "",
+			Value: "EOF",
 			Pos:   token.Position{},
 		},
 	}
@@ -435,7 +435,7 @@ func TestOperators(t *testing.T) {
 func TestIdentifiers(t *testing.T) {
 	input := "variable snake_case camelCase PascalCase snake_case_with_number_1234"
 
-	lexer := NewLexer([]byte(input))
+	lexer := NewLexer([]byte(input), "test")
 	tokens, errors := lexer.Tokenize()
 	if len(errors) != 0 {
 		for _, err := range errors {
@@ -471,7 +471,7 @@ func TestIdentifiers(t *testing.T) {
 		},
 		{
 			Kind:  token.EOF,
-			Value: "",
+			Value: "EOF",
 			Pos:   token.Position{},
 		},
 	}

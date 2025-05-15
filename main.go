@@ -32,7 +32,7 @@ func interpretProgram(path string) {
 		fmt.Fprintf(os.Stderr, err.Error())
 	}
 
-	runProgram(content)
+	runProgram(content, path)
 }
 
 func repl() {
@@ -47,17 +47,17 @@ func repl() {
 			return
 		}
 
-		runProgram([]byte(line))
+		runProgram([]byte(line), "repl")
 	}
 
 }
 
-func runProgram(program []byte) {
-	lexer := lexer.NewLexer(program)
+func runProgram(program []byte, file string) {
+	lexer := lexer.NewLexer(program, file)
 	tokens, errors := lexer.Tokenize()
 	if errors != nil {
 		for _, err := range errors {
-			fmt.Printf("Error: %s\n", err)
+			fmt.Printf("%s\n", err)
 		}
 	}
 
@@ -66,19 +66,19 @@ func runProgram(program []byte) {
 	// 	fmt.Printf("%v\n", tok)
 	// }
 
-	parser := parser.NewParser(tokens)
+	parser := parser.NewParser(tokens, file)
 	root, errors := parser.Parse()
 
 	if len(errors) != 0 {
 		for _, err := range errors {
-			fmt.Printf("Error: %s\n", err)
+			fmt.Printf("%s\n", err)
 		}
 		return
 	}
 
 	// fmt.Printf("%v\n", root)
 
-	typechecker := types.NewChecker()
+	typechecker := types.NewChecker(file)
 	ok := typechecker.Visit(root)
 	if !ok {
 		fmt.Println("Got typerrors: ")

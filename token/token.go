@@ -120,7 +120,7 @@ func (t TokenType) String() string {
 	case ELSE:
 		return "'else'"
 	case EOF:
-		return "''"
+		return "'EOF'"
 	case EQUAL:
 		return "'='"
 	case EQUAL_EQUAL:
