@@ -24,13 +24,15 @@ import (
 */
 
 type Parser struct {
+	file    string        // Name of file
 	tokens  []token.Token // List of tokens to parse
 	current int           // Current token
 	errors  []error       // Parse errors
 }
 
-func NewParser(tokens []token.Token) *Parser {
+func NewParser(tokens []token.Token, file string) *Parser {
 	return &Parser{
+		file:    file,
 		tokens:  tokens,
 		current: 0,
 		errors:  []error{},
@@ -76,13 +78,12 @@ func (p *Parser) check(kind token.TokenType) bool {
 // Advance parser one token if kind is next token.
 // Returns error without advancing if not found
 func (p *Parser) consume(kind token.TokenType) (token.Token, error) {
-	// TODO: Rewrite error messages to include filename:line - msg
 	if p.check(kind) {
 		return p.advance(), nil
 	}
 
 	tok := p.peek()
-	return token.Token{}, p.error(fmt.Sprintf("Unexpected token at line: %d. Expected %v, found %v", tok.Pos.Row, kind, tok.Kind))
+	return token.Token{}, p.error(fmt.Sprintf("Unexpected token. Expected %v, found %v", kind, tok.Kind), tok)
 }
 
 func (p *Parser) isAtEnd() bool {
@@ -90,8 +91,8 @@ func (p *Parser) isAtEnd() bool {
 }
 
 // Create error with message and add to list of errors
-func (p *Parser) error(message string) error {
-	err := errors.New(message)
+func (p *Parser) error(message string, tok token.Token) error {
+	err := errors.New(fmt.Sprintf("%s:%d:%d - %s", p.file, tok.Pos.Row, tok.Pos.Column, message))
 	p.errors = append(p.errors, err)
 	return err
 }
@@ -107,10 +108,6 @@ func (p *Parser) advance() token.Token {
 // Peek at next token without advancing
 // Returns last token if at end
 func (p *Parser) peek() token.Token {
-	if p.isAtEnd() {
-		return p.previous()
-	}
-
 	return p.tokens[p.current]
 }
 
@@ -190,7 +187,7 @@ func (p *Parser) variableDeclaration() (ast.Stmt, error) {
 	}
 
 	if var_type == nil && initial_value == nil {
-		return nil, p.error(fmt.Sprintf("Variable needs either type or initial value at line %d", decl.Pos.Row))
+		return nil, p.error("Variable needs either type or initial value", name)
 	}
 
 	stmt := &ast.VarDeclaration{
@@ -235,7 +232,8 @@ func (p *Parser) expressionStatement() (ast.Stmt, error) {
 	}
 
 	// Parse assignment
-	if p.expect([]token.TokenType{token.EQUAL}) {
+	if p.check(token.EQUAL) {
+		equals := p.previous()
 		value, err := p.expression()
 		if err != nil {
 			return nil, err
@@ -256,7 +254,7 @@ func (p *Parser) expressionStatement() (ast.Stmt, error) {
 			return assignment, nil
 		}
 
-		err = p.error(fmt.Sprintf("Invalid assignment target at line %d", expr.Position().Row))
+		err = p.error("Invalid assignment target", equals)
 		return nil, err
 	}
 
@@ -476,5 +474,5 @@ func (p *Parser) primary() (ast.Expr, error) {
 		}, nil
 	}
 
-	return nil, p.error(fmt.Sprintf("Expected expression at line %d col %d", p.peek().Pos.Row, p.peek().Pos.Column))
+	return nil, p.error("Expected expression", p.peek())
 }
