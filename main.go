@@ -6,13 +6,33 @@ import (
 	"interpreter/lexer"
 	"interpreter/parser"
 	"interpreter/types"
+	"io"
 	"os"
 
 	"github.com/chzyer/readline"
 )
 
 func main() {
+	if len(os.Args) > 1 {
+		interpretProgram(os.Args[1])
+	}
+
 	repl()
+}
+
+func interpretProgram(path string) {
+	file, err := os.Open(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, err.Error())
+		os.Exit(1)
+	}
+
+	content, err := io.ReadAll(file)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, err.Error())
+	}
+
+	runProgram(content)
 }
 
 func repl() {
@@ -27,45 +47,47 @@ func repl() {
 			return
 		}
 
-		lexer := lexer.NewLexer([]byte(line))
-		tokens, errors := lexer.Tokenize()
-		if errors != nil {
-			for _, err := range errors {
-				fmt.Printf("Error: %s\n", err)
-			}
-		}
-		
-		// fmt.Printf("Tokens: \n")
-		// for _, tok := range tokens {
-		// 	fmt.Printf("%v\n", tok)
-		// }
-
-		parser := parser.NewParser(tokens)
-		root, errors := parser.Parse()
-
-		if len(errors) != 0 {
-			for _, err := range errors {
-				fmt.Printf("Error: %s\n", err)
-			}
-			continue
-		}
-
-		// fmt.Printf("%v\n", root)
-
-		typechecker := types.Checker{
-			Errors: make([]error, 0),
-		}
-		ok := typechecker.Visit(root)
-		if !ok {
-			fmt.Println("Got typerrors: ")
-			for _, err := range typechecker.Errors {
-				fmt.Printf("%v\n", err)
-			}
-			continue
-		}
-
-		interpreter := interpret.Interpreter{}
-		interpreter.Visit(root)
+		runProgram([]byte(line))
 	}
 
+}
+
+func runProgram(program []byte) {
+	lexer := lexer.NewLexer(program)
+	tokens, errors := lexer.Tokenize()
+	if errors != nil {
+		for _, err := range errors {
+			fmt.Printf("Error: %s\n", err)
+		}
+	}
+
+	// fmt.Printf("Tokens: \n")
+	// for _, tok := range tokens {
+	// 	fmt.Printf("%v\n", tok)
+	// }
+
+	parser := parser.NewParser(tokens)
+	root, errors := parser.Parse()
+
+	if len(errors) != 0 {
+		for _, err := range errors {
+			fmt.Printf("Error: %s\n", err)
+		}
+		return
+	}
+
+	// fmt.Printf("%v\n", root)
+
+	typechecker := types.NewChecker()
+	ok := typechecker.Visit(root)
+	if !ok {
+		fmt.Println("Got typerrors: ")
+		for _, err := range typechecker.Errors {
+			fmt.Printf("%v\n", err)
+		}
+		return
+	}
+
+	interpreter := interpret.NewInterpreter()
+	interpreter.Visit(root)
 }

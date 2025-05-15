@@ -3,19 +3,21 @@ package types
 type PrimitiveKind int
 
 const (
-	Illegal PrimitiveKind = iota
+	Undefined PrimitiveKind = iota
 	Int
 	Real
 	Char
 	String
-	Bool
+	Boolean
 )
 
-var integer *Primitive
-var double *Primitive
-var char *Primitive
-var text *Primitive
-var boolean *Primitive
+// Singleton types
+var undefined *Primitive = nil
+var integer *Primitive = nil
+var double *Primitive = nil
+var char *Primitive = nil
+var text *Primitive = nil
+var boolean *Primitive = nil
 
 type Primitive struct {
 	kind PrimitiveKind
@@ -34,15 +36,18 @@ func (p *Primitive) String() string {
 	return typeString(p)
 }
 
+// Get singleton
 func NewChar() *Primitive {
 	if char != nil {
 		return char
 	}
 
-	return &Primitive{
+	char = &Primitive{
 		kind: Char,
 		name: "char",
 	}
+
+	return char
 }
 
 func NewReal() *Primitive {
@@ -50,21 +55,23 @@ func NewReal() *Primitive {
 		return double
 	}
 
-	return &Primitive{
+	double = &Primitive{
 		kind: Real,
 		name: "real",
 	}
+
+	return double
 }
 
 func NewInteger() *Primitive {
-	if integer != nil {
-		return integer
+	if integer == nil {
+		integer = &Primitive{
+			kind: Int,
+			name: "int",
+		}
 	}
 
-	return &Primitive{
-		kind: Int,
-		name: "int",
-	}
+	return integer
 }
 
 func NewString() *Primitive {
@@ -72,19 +79,49 @@ func NewString() *Primitive {
 		return text
 	}
 
-	return &Primitive{
+	text = &Primitive{
 		kind: String,
 		name: "string",
 	}
+
+	return text
 }
 
-func NewBool() *Primitive {
+func NewBoolean() *Primitive {
 	if boolean != nil {
 		return boolean
 	}
 
-	return &Primitive{
-		kind: Bool,
-		name: "bool",
+	boolean = &Primitive{
+		kind: Boolean,
+		name: "boolean",
 	}
+
+	return boolean
+}
+
+func NewUndefined() *Primitive {
+	if undefined != nil {
+		return undefined
+	}
+
+	undefined = &Primitive{
+		kind: Undefined,
+		name: "undefined",
+	}
+
+	return undefined
+}
+
+// Initialize inbuilt types
+func getPrimitives() map[string]Type {
+	types := map[string]Type{}
+
+	types["int"] = NewInteger()
+	types["real"] = NewReal()
+	types["string"] = NewString()
+	types["boolean"] = NewBoolean()
+	types["char"] = NewChar()
+
+	return types
 }
