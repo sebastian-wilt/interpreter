@@ -1,0 +1,19 @@
+val a = "global a";
+val b = "global b";
+val c = "global c";
+{
+  val a = "outer a";
+  val b = "outer b";
+  {
+    val a = "inner a";
+    a;
+    b;
+    c;
+  }
+  a;
+  b;
+  c;
+}
+a;
+b;
+c;
