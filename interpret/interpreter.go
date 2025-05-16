@@ -109,9 +109,51 @@ func (i *Interpreter) evaluateExpr(node ast.Expr) Value {
 		return i.evaluateLiteralExpr(n)
 	case *ast.UnaryExpr:
 		return i.evaluateUnaryExpr(n)
+	case *ast.BlockExpr:
+		return i.evaluateBlockExpr(n)
+	case *ast.IfExpr:
+		return i.evaluateIfExpr(n)
 	default:
-		panic(fmt.Sprintf("unexpected ast.Expr: %#v", node))
+		panic(fmt.Sprintf("unexpected ast.Expr: %#v", n))
 	}
+}
+
+// Evaluate if expressions
+func (i *Interpreter) evaluateIfExpr(expr *ast.IfExpr) Value {
+	cond := i.evaluateExpr(expr.Condition).(*Boolean)
+	if cond.Value {
+		return i.evaluateBlockExpr(expr.Then)
+	} else {
+		return i.evaluateBlockExpr(expr.Else)
+	}
+}
+
+// Evaluate block expressions
+func (i *Interpreter) evaluateBlockExpr(expr *ast.BlockExpr) Value {
+	i.enterBlock()
+	defer i.exitBlock()
+
+	var val Value
+	for n, stmt := range expr.Stmts {
+		switch s := stmt.(type) {
+		case *ast.AssignmentStmt:
+			i.executeAssignment(s)
+		case *ast.BlockStmt:
+			i.executeBlockStmt(s)
+		case *ast.ExprStmt:
+			if n == len(expr.Stmts)-1 {
+				val = i.evaluateExpr(s.Expr)
+			} else {
+				i.evaluateExpr(s.Expr)
+			}
+		case *ast.VarDeclaration:
+			i.executeVarDeclaration(s)
+		default:
+			panic(fmt.Sprintf("unexpected ast.Stmt: %#v", s))
+		}
+	}
+
+	return val
 }
 
 // Evaluate identfiers expression

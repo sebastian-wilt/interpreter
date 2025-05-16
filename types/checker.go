@@ -157,9 +157,61 @@ func (c *Checker) checkExpr(expr ast.Expr) Type {
 		return c.checkLiteralExpr(n)
 	case *ast.UnaryExpr:
 		return c.checkUnaryExpr(n)
+	case *ast.BlockExpr:
+		return c.checkBlockExpr(n)
+	case *ast.IfExpr:
+		return c.checkIfExpr(n)
 	default:
 		panic(fmt.Sprintf("unexpected ast.Expr: %#v", n))
 	}
+}
+
+// Typecheck if expression
+func (c *Checker) checkIfExpr(expr *ast.IfExpr) Type {
+	cond := c.checkExpr(expr.Condition)
+	if cond != NewBoolean() {
+		c.error("Expected boolean condition", expr)
+		return nil
+	}
+
+	then := c.checkBlockExpr(expr.Then)
+	otherwise := c.checkBlockExpr(expr.Else)
+
+	if then != otherwise {
+		c.error("Both branches must return the same type", expr)
+		return nil
+	}
+
+	return then
+}
+
+// Typecheck block expressions
+func (c *Checker) checkBlockExpr(expr *ast.BlockExpr) Type {
+	c.enterBlock()
+	defer c.exitBlock()
+
+	var t Type
+	for i, n := range expr.Stmts {
+		stmt := n.(ast.Stmt)
+		switch s := stmt.(type) {
+		case *ast.AssignmentStmt:
+			c.checkAssignment(s)
+		case *ast.BlockStmt:
+			c.checkBlockStmt(s)
+		case *ast.ExprStmt:
+			if i == len(expr.Stmts)-1 {
+				t = c.checkExpr(s.Expr)
+			} else {
+				c.checkExpr(s.Expr)
+			}
+		case *ast.VarDeclaration:
+			c.checkVarDeclaration(s)
+		default:
+			panic(fmt.Sprintf("unexpected ast.Stmt: %#v", s))
+		}
+	}
+
+	return t
 }
 
 // Typecheck identifiers

@@ -134,6 +134,7 @@ func (p *Parser) synchronize() {
 	}
 }
 
+// Parse statement
 func (p *Parser) statement() (ast.Stmt, error) {
 	if p.expect([]token.TokenType{token.VAL, token.VAR}) {
 		return p.variableDeclaration()
@@ -220,7 +221,10 @@ func (p *Parser) block() ([]ast.Stmt, error) {
 		statements = append(statements, statement)
 	}
 
-	p.consume(token.RIGHT_BRACE)
+	_, err := p.consume(token.RIGHT_BRACE)
+	if err != nil {
+		return nil, err
+	}
 	return statements, nil
 }
 
@@ -258,9 +262,12 @@ func (p *Parser) expressionStatement() (ast.Stmt, error) {
 		return nil, err
 	}
 
-	_, err = p.consume(token.SEMICOLON)
-	if err != nil {
-		return nil, err
+	// Allow if expressions without semicolon at end
+	if _, ok := expr.(*ast.IfExpr); !ok {
+		_, err = p.consume(token.SEMICOLON)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	stmt := &ast.ExprStmt{
@@ -286,7 +293,81 @@ Precedence:
 
 // Parse expression
 func (p *Parser) expression() (ast.Expr, error) {
+	if p.check(token.IF) {
+		p.advance()
+		return p.ifExpr()
+	}
+
 	return p.equality()
+}
+
+// Parse if expressions
+func (p *Parser) ifExpr() (ast.Expr, error) {
+	if_token := p.previous()
+	condition, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+
+	then, err := p.blockExpr()
+	if err != nil {
+		return nil, err
+	}
+
+	// Else branch is mandatory in if expression
+	// Optional in if statement
+	_, err = p.consume(token.ELSE)
+	if err != nil {
+		return nil, err
+	}
+
+	otherwise, err := p.blockExpr()
+	if err != nil {
+		return nil, err
+	}
+	expr := &ast.IfExpr{
+		Pos:       if_token.Pos,
+		Condition: condition,
+		Then:      then,
+		Else:      otherwise,
+	}
+
+	return expr, nil
+}
+
+// Parse expression blocks
+func (p *Parser) blockExpr() (*ast.BlockExpr, error) {
+	lbrace, err := p.consume(token.LEFT_BRACE)
+	if err != nil {
+		return nil, err
+	}
+
+	statements := make([]ast.Stmt, 0)
+
+	for p.peek().Kind != token.RIGHT_BRACE && !p.isAtEnd() {
+		stmt, err := p.statement()
+		if err != nil {
+			return nil, err
+		}
+
+		statements = append(statements, stmt)
+	}
+
+	if p.isAtEnd() {
+		p.error("Expected '}'", p.advance())
+	}
+
+	_, err = p.consume(token.RIGHT_BRACE)
+	if err != nil {
+		return nil, err
+	}
+
+	expr := &ast.BlockExpr{
+		Pos:   lbrace.Pos,
+		Stmts: statements,
+	}
+
+	return expr, nil
 }
 
 // Parse expressions with same precedence as equality.

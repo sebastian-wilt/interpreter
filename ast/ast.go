@@ -1,7 +1,6 @@
 package ast
 
 import (
-	"fmt"
 	"interpreter/token"
 )
 
@@ -12,7 +11,6 @@ type Node interface {
 type Expr interface {
 	Node
 	exprNode()
-	fmt.Stringer // For printing parse tree
 }
 
 type Stmt interface {
@@ -50,6 +48,18 @@ type (
 		Op   token.Token    // Unary operator
 		Expr Expr           // Expression to apply operator to
 	}
+
+	BlockExpr struct {
+		Pos   token.Position // Position of opening brace
+		Stmts []Stmt         // Expression/statements in block (last expression is returned)
+	}
+
+	IfExpr struct {
+		Pos       token.Position // Position of 'if'
+		Condition Expr           // Condition determining which branch is executed
+		Then      *BlockExpr     // Executed if condition is true
+		Else      *BlockExpr     // Executed if condition is false
+	}
 )
 
 func (e *Ident) Position() token.Position        { return e.Pos }
@@ -57,12 +67,16 @@ func (e *LiteralExpr) Position() token.Position  { return e.Pos }
 func (e *BinaryExpr) Position() token.Position   { return e.Pos }
 func (e *GroupingExpr) Position() token.Position { return e.Pos }
 func (e *UnaryExpr) Position() token.Position    { return e.Pos }
+func (e *BlockExpr) Position() token.Position    { return e.Pos }
+func (e *IfExpr) Position() token.Position       { return e.Pos }
 
 func (e *Ident) exprNode()        {}
 func (e *LiteralExpr) exprNode()  {}
 func (e *BinaryExpr) exprNode()   {}
 func (e *GroupingExpr) exprNode() {}
 func (e *UnaryExpr) exprNode()    {}
+func (e *BlockExpr) exprNode()    {}
+func (e *IfExpr) exprNode()       {}
 
 // Statements
 type (
