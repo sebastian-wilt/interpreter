@@ -103,14 +103,23 @@ type (
 		Name  string         // Identifier to assign
 		Value Expr           // Value to assign to identifier
 	}
+
+	IfStmt struct {
+		Pos       token.Position // Position of 'if'
+		Condition Expr           // Determines which branch is executed
+		Then      *BlockStmt     // Executed if condition is true
+		Else      *BlockStmt     // Executed if condition is false
+	}
 )
 
 func (s *VarDeclaration) Position() token.Position { return s.Pos }
 func (s *ExprStmt) Position() token.Position       { return s.Pos }
 func (s *BlockStmt) Position() token.Position      { return s.Pos }
-func (e *AssignmentStmt) Position() token.Position { return e.Pos }
+func (s *AssignmentStmt) Position() token.Position { return s.Pos }
+func (s *IfStmt) Position() token.Position         { return s.Pos }
 
 func (s *VarDeclaration) stmtNode() {}
 func (s *ExprStmt) stmtNode()       {}
 func (s *BlockStmt) stmtNode()      {}
-func (e *AssignmentStmt) stmtNode() {}
+func (s *AssignmentStmt) stmtNode() {}
+func (s *IfStmt) stmtNode()         {}

@@ -49,9 +49,28 @@ func (c *Checker) checkStmt(stmt ast.Stmt) bool {
 		return c.checkVarDeclaration(n)
 	case *ast.AssignmentStmt:
 		return c.checkAssignment(n)
+	case *ast.IfStmt:
+		return c.checkIfStmt(n)
 	default:
 		panic(fmt.Sprintf("unexpected ast.Stmt: %#v", n))
 	}
+}
+
+// Typecheck if statements
+func (c *Checker) checkIfStmt(stmt *ast.IfStmt) bool {
+	cond := c.checkExpr(stmt.Condition)
+	if cond != NewBoolean() {
+		c.error("Expected boolean condition", stmt)
+		return false
+	}
+
+	then := c.checkBlockStmt(stmt.Then)
+	if stmt.Else != nil {
+		otherwise := c.checkBlockStmt(stmt.Else)
+		return then && otherwise
+	}
+
+	return then
 }
 
 // Typecheck blocks

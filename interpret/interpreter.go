@@ -56,8 +56,22 @@ func (i *Interpreter) executeStmt(node ast.Stmt) {
 		i.executeVarDeclaration(stmt)
 	case *ast.AssignmentStmt:
 		i.executeAssignment(stmt)
+	case *ast.IfStmt:
+		i.executeIfStmt(stmt)
 	default:
 		panic(fmt.Sprintf("unexpected ast.Stmt: %#v", stmt))
+	}
+}
+
+// Execute if statement
+func (i *Interpreter) executeIfStmt(stmt *ast.IfStmt) {
+	cond := i.evaluateExpr(stmt.Condition).(*Boolean)
+	if cond.Value {
+		i.executeBlockStmt(stmt.Then)
+	} else {
+		if stmt.Else != nil {
+			i.executeBlockStmt(stmt.Else)
+		}
 	}
 }
 

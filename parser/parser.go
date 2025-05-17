@@ -12,8 +12,7 @@ import (
 	Recursive descent parser
 
 	Operator precedence:
-	expression ::= assignment;
-	assignment ::= IDENTIFIER "=" assignment | equality;
+	expression ::= equality;
 	equality ::= comparison ( ( "!=" | "==") comparison)*;
 	comparison ::= term ( ( ">" | ">=" | "<=" | "<") term)*;
 	term ::= factor ( ( "-" | "+" ) factor)*;
@@ -154,7 +153,66 @@ func (p *Parser) statement() (ast.Stmt, error) {
 		}, nil
 	}
 
+	if p.expect([]token.TokenType{token.IF}) {
+		return p.ifStmt()
+	}
+
 	return p.expressionStatement()
+}
+
+// Parse if statement
+func (p *Parser) ifStmt() (ast.Stmt, error) {
+	if_token := p.previous()
+	condition, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+
+	// Then branch
+	lbrace, err := p.consume(token.LEFT_BRACE)
+	if err != nil {
+		return nil, err
+	}
+
+	statements, err := p.block()
+	if err != nil {
+		return nil, err
+	}
+
+	then := &ast.BlockStmt{
+		Pos:   lbrace.Pos,
+		Stmts: statements,
+	}
+
+	// Optional else branch
+	var otherwise *ast.BlockStmt
+	if p.check(token.ELSE) {
+		p.advance()
+
+		lbrace, err := p.consume(token.LEFT_BRACE)
+		if err != nil {
+			return nil, err
+		}
+
+		statements, err := p.block()
+		if err != nil {
+			return nil, err
+		}
+
+		otherwise = &ast.BlockStmt{
+			Pos:   lbrace.Pos,
+			Stmts: statements,
+		}
+	}
+
+	expr := &ast.IfStmt{
+		Pos:       if_token.Pos,
+		Condition: condition,
+		Then:      then,
+		Else:      otherwise,
+	}
+
+	return expr, nil
 }
 
 // Parse variable declaration
@@ -237,7 +295,7 @@ func (p *Parser) expressionStatement() (ast.Stmt, error) {
 
 	// Parse assignment
 	if p.check(token.EQUAL) {
-		equals := p.previous()
+		equals := p.advance()
 		value, err := p.expression()
 		if err != nil {
 			return nil, err
