@@ -12,8 +12,7 @@ import (
 	Recursive descent parser
 
 	Operator precedence:
-	expression ::= assignment;
-	assignment ::= IDENTIFIER "=" assignment | equality;
+	expression ::= equality;
 	equality ::= comparison ( ( "!=" | "==") comparison)*;
 	comparison ::= term ( ( ">" | ">=" | "<=" | "<") term)*;
 	term ::= factor ( ( "-" | "+" ) factor)*;
@@ -134,6 +133,7 @@ func (p *Parser) synchronize() {
 	}
 }
 
+// Parse statement
 func (p *Parser) statement() (ast.Stmt, error) {
 	if p.expect([]token.TokenType{token.VAL, token.VAR}) {
 		return p.variableDeclaration()
@@ -153,7 +153,66 @@ func (p *Parser) statement() (ast.Stmt, error) {
 		}, nil
 	}
 
+	if p.expect([]token.TokenType{token.IF}) {
+		return p.ifStmt()
+	}
+
 	return p.expressionStatement()
+}
+
+// Parse if statement
+func (p *Parser) ifStmt() (ast.Stmt, error) {
+	if_token := p.previous()
+	condition, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+
+	// Then branch
+	lbrace, err := p.consume(token.LEFT_BRACE)
+	if err != nil {
+		return nil, err
+	}
+
+	statements, err := p.block()
+	if err != nil {
+		return nil, err
+	}
+
+	then := &ast.BlockStmt{
+		Pos:   lbrace.Pos,
+		Stmts: statements,
+	}
+
+	// Optional else branch
+	var otherwise *ast.BlockStmt
+	if p.check(token.ELSE) {
+		p.advance()
+
+		lbrace, err := p.consume(token.LEFT_BRACE)
+		if err != nil {
+			return nil, err
+		}
+
+		statements, err := p.block()
+		if err != nil {
+			return nil, err
+		}
+
+		otherwise = &ast.BlockStmt{
+			Pos:   lbrace.Pos,
+			Stmts: statements,
+		}
+	}
+
+	expr := &ast.IfStmt{
+		Pos:       if_token.Pos,
+		Condition: condition,
+		Then:      then,
+		Else:      otherwise,
+	}
+
+	return expr, nil
 }
 
 // Parse variable declaration
@@ -220,7 +279,10 @@ func (p *Parser) block() ([]ast.Stmt, error) {
 		statements = append(statements, statement)
 	}
 
-	p.consume(token.RIGHT_BRACE)
+	_, err := p.consume(token.RIGHT_BRACE)
+	if err != nil {
+		return nil, err
+	}
 	return statements, nil
 }
 
@@ -233,7 +295,7 @@ func (p *Parser) expressionStatement() (ast.Stmt, error) {
 
 	// Parse assignment
 	if p.check(token.EQUAL) {
-		equals := p.previous()
+		equals := p.advance()
 		value, err := p.expression()
 		if err != nil {
 			return nil, err
@@ -258,9 +320,12 @@ func (p *Parser) expressionStatement() (ast.Stmt, error) {
 		return nil, err
 	}
 
-	_, err = p.consume(token.SEMICOLON)
-	if err != nil {
-		return nil, err
+	// Allow if expressions without semicolon at end
+	if _, ok := expr.(*ast.IfExpr); !ok {
+		_, err = p.consume(token.SEMICOLON)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	stmt := &ast.ExprStmt{
@@ -274,7 +339,9 @@ func (p *Parser) expressionStatement() (ast.Stmt, error) {
 /*
 Precedence:
 
-	expression ::= equality;
+	expression ::= lor;
+	lor := land ("or" land)*;
+	land := equality ("and" equality)*;
 	equality ::= comparison ( ( "!=" | "==") comparison)*;
 	comparison ::= term ( ( ">" | ">=" | "<=" | "<") term)*;
 	term ::= factor ( ( "-" | "+" ) factor)*;
@@ -286,7 +353,131 @@ Precedence:
 
 // Parse expression
 func (p *Parser) expression() (ast.Expr, error) {
-	return p.equality()
+	if p.check(token.IF) {
+		p.advance()
+		return p.ifExpr()
+	}
+
+	return p.logicalOr()
+}
+
+// Parse if expressions
+func (p *Parser) ifExpr() (ast.Expr, error) {
+	if_token := p.previous()
+	condition, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+
+	then, err := p.blockExpr()
+	if err != nil {
+		return nil, err
+	}
+
+	// Else branch is mandatory in if expression
+	// Optional in if statement
+	_, err = p.consume(token.ELSE)
+	if err != nil {
+		return nil, err
+	}
+
+	otherwise, err := p.blockExpr()
+	if err != nil {
+		return nil, err
+	}
+	expr := &ast.IfExpr{
+		Pos:       if_token.Pos,
+		Condition: condition,
+		Then:      then,
+		Else:      otherwise,
+	}
+
+	return expr, nil
+}
+
+// Parse expression blocks
+func (p *Parser) blockExpr() (*ast.BlockExpr, error) {
+	lbrace, err := p.consume(token.LEFT_BRACE)
+	if err != nil {
+		return nil, err
+	}
+
+	statements := make([]ast.Stmt, 0)
+
+	for p.peek().Kind != token.RIGHT_BRACE && !p.isAtEnd() {
+		stmt, err := p.statement()
+		if err != nil {
+			return nil, err
+		}
+
+		statements = append(statements, stmt)
+	}
+
+	if p.isAtEnd() {
+		p.error("Expected '}'", p.advance())
+	}
+
+	_, err = p.consume(token.RIGHT_BRACE)
+	if err != nil {
+		return nil, err
+	}
+
+	expr := &ast.BlockExpr{
+		Pos:   lbrace.Pos,
+		Stmts: statements,
+	}
+
+	return expr, nil
+}
+
+// Parse logical disjunctions
+func (p *Parser) logicalOr() (ast.Expr, error) {
+	left, err := p.logicalAnd()
+	if err != nil {
+		return nil, err
+	}
+
+	for p.check(token.LOR) {
+		op := p.advance()
+		right, err := p.logicalAnd()
+		if err != nil {
+			return nil, err
+		}
+
+		left = &ast.LogicalExpr{
+			Left:  left,
+			Op:    op,
+			Pos:   op.Pos,
+			Right: right,
+		}
+	}
+
+	return left, nil
+}
+
+// Parse logical conjunctions
+func (p *Parser) logicalAnd() (ast.Expr, error) {
+	left, err := p.equality()
+	if err != nil {
+		return nil, err
+	}
+
+	for p.check(token.LAND) {
+		op := p.advance()
+		right, err := p.equality()
+		if err != nil {
+			return nil, err
+		}
+
+		left = &ast.LogicalExpr{
+			Left:  left,
+			Op:    op,
+			Pos:   op.Pos,
+			Right: right,
+		}
+	}
+
+	return left, nil
 }
 
 // Parse expressions with same precedence as equality.

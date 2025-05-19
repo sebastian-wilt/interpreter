@@ -56,8 +56,22 @@ func (i *Interpreter) executeStmt(node ast.Stmt) {
 		i.executeVarDeclaration(stmt)
 	case *ast.AssignmentStmt:
 		i.executeAssignment(stmt)
+	case *ast.IfStmt:
+		i.executeIfStmt(stmt)
 	default:
 		panic(fmt.Sprintf("unexpected ast.Stmt: %#v", stmt))
+	}
+}
+
+// Execute if statement
+func (i *Interpreter) executeIfStmt(stmt *ast.IfStmt) {
+	cond := i.evaluateExpr(stmt.Condition).(*Boolean)
+	if cond.Value {
+		i.executeBlockStmt(stmt.Then)
+	} else {
+		if stmt.Else != nil {
+			i.executeBlockStmt(stmt.Else)
+		}
 	}
 }
 
@@ -109,9 +123,71 @@ func (i *Interpreter) evaluateExpr(node ast.Expr) Value {
 		return i.evaluateLiteralExpr(n)
 	case *ast.UnaryExpr:
 		return i.evaluateUnaryExpr(n)
+	case *ast.BlockExpr:
+		return i.evaluateBlockExpr(n)
+	case *ast.IfExpr:
+		return i.evaluateIfExpr(n)
+	case *ast.LogicalExpr:
+		return i.evaluateLogicalExpr(n)
 	default:
-		panic(fmt.Sprintf("unexpected ast.Expr: %#v", node))
+		panic(fmt.Sprintf("unexpected ast.Expr: %#v", n))
 	}
+}
+
+// Evaluate logical expressions
+func (i *Interpreter) evaluateLogicalExpr(expr *ast.LogicalExpr) Value {
+	left := i.evaluateExpr(expr.Left).(*Boolean)
+	// Shortcircuit if left side of "||" is true
+	if expr.Op.Kind == token.LOR {
+		if left.Value {
+			return left
+		}
+	} else {
+		// Or left side of "&&" is false
+		if !left.Value {
+			return left
+		}
+	}
+
+	return i.evaluateExpr(expr.Right).(*Boolean)
+}
+
+// Evaluate if expressions
+func (i *Interpreter) evaluateIfExpr(expr *ast.IfExpr) Value {
+	cond := i.evaluateExpr(expr.Condition).(*Boolean)
+	if cond.Value {
+		return i.evaluateBlockExpr(expr.Then)
+	} else {
+		return i.evaluateBlockExpr(expr.Else)
+	}
+}
+
+// Evaluate block expressions
+func (i *Interpreter) evaluateBlockExpr(expr *ast.BlockExpr) Value {
+	i.enterBlock()
+	defer i.exitBlock()
+
+	var val Value
+	for n, stmt := range expr.Stmts {
+		switch s := stmt.(type) {
+		case *ast.AssignmentStmt:
+			i.executeAssignment(s)
+		case *ast.BlockStmt:
+			i.executeBlockStmt(s)
+		case *ast.ExprStmt:
+			if n == len(expr.Stmts)-1 {
+				val = i.evaluateExpr(s.Expr)
+			} else {
+				i.evaluateExpr(s.Expr)
+			}
+		case *ast.VarDeclaration:
+			i.executeVarDeclaration(s)
+		default:
+			panic(fmt.Sprintf("unexpected ast.Stmt: %#v", s))
+		}
+	}
+
+	return val
 }
 
 // Evaluate identfiers expression

@@ -81,7 +81,6 @@ func runProgram(program []byte, file string) {
 	typechecker := types.NewChecker(file)
 	ok := typechecker.Visit(root)
 	if !ok {
-		fmt.Println("Got typerrors: ")
 		for _, err := range typechecker.Errors {
 			fmt.Printf("%v\n", err)
 		}

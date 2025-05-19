@@ -1,0 +1,39 @@
+// Evaluates to 1
+if true {
+  1;
+} else { 
+  2;
+}
+
+
+// Gives typerror
+// if (true) {
+//   1; 
+//   2;
+// } else {
+//   "abc";
+// }
+
+
+// a = 20
+val a = if false {
+  10;
+} else {
+  20;
+};
+
+// 20
+a;
+
+// 30
+a + 10;
+
+// Outputs hello
+if true {
+    "hello";
+}
+
+// Not run
+if false {
+    "hello";
+}

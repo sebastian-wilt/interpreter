@@ -1,7 +1,6 @@
 package ast
 
 import (
-	"fmt"
 	"interpreter/token"
 )
 
@@ -12,7 +11,6 @@ type Node interface {
 type Expr interface {
 	Node
 	exprNode()
-	fmt.Stringer // For printing parse tree
 }
 
 type Stmt interface {
@@ -40,6 +38,13 @@ type (
 		Right Expr           // Right operand
 	}
 
+	LogicalExpr struct {
+		Left  Expr           // Left operand
+		Op    token.Token    // Operator
+		Pos   token.Position // Position of op
+		Right Expr           // Right operand
+	}
+
 	GroupingExpr struct {
 		Pos  token.Position // Position of left paren
 		Expr Expr           // Expression inside parenthesis
@@ -50,6 +55,18 @@ type (
 		Op   token.Token    // Unary operator
 		Expr Expr           // Expression to apply operator to
 	}
+
+	BlockExpr struct {
+		Pos   token.Position // Position of opening brace
+		Stmts []Stmt         // Expression/statements in block (last expression is returned)
+	}
+
+	IfExpr struct {
+		Pos       token.Position // Position of 'if'
+		Condition Expr           // Condition determining which branch is executed
+		Then      *BlockExpr     // Executed if condition is true
+		Else      *BlockExpr     // Executed if condition is false
+	}
 )
 
 func (e *Ident) Position() token.Position        { return e.Pos }
@@ -57,12 +74,18 @@ func (e *LiteralExpr) Position() token.Position  { return e.Pos }
 func (e *BinaryExpr) Position() token.Position   { return e.Pos }
 func (e *GroupingExpr) Position() token.Position { return e.Pos }
 func (e *UnaryExpr) Position() token.Position    { return e.Pos }
+func (e *BlockExpr) Position() token.Position    { return e.Pos }
+func (e *IfExpr) Position() token.Position       { return e.Pos }
+func (e *LogicalExpr) Position() token.Position  { return e.Pos }
 
 func (e *Ident) exprNode()        {}
 func (e *LiteralExpr) exprNode()  {}
 func (e *BinaryExpr) exprNode()   {}
 func (e *GroupingExpr) exprNode() {}
 func (e *UnaryExpr) exprNode()    {}
+func (e *BlockExpr) exprNode()    {}
+func (e *IfExpr) exprNode()       {}
+func (e *LogicalExpr) exprNode()  {}
 
 // Statements
 type (
@@ -89,14 +112,23 @@ type (
 		Name  string         // Identifier to assign
 		Value Expr           // Value to assign to identifier
 	}
+
+	IfStmt struct {
+		Pos       token.Position // Position of 'if'
+		Condition Expr           // Determines which branch is executed
+		Then      *BlockStmt     // Executed if condition is true
+		Else      *BlockStmt     // Executed if condition is false
+	}
 )
 
 func (s *VarDeclaration) Position() token.Position { return s.Pos }
 func (s *ExprStmt) Position() token.Position       { return s.Pos }
 func (s *BlockStmt) Position() token.Position      { return s.Pos }
-func (e *AssignmentStmt) Position() token.Position { return e.Pos }
+func (s *AssignmentStmt) Position() token.Position { return s.Pos }
+func (s *IfStmt) Position() token.Position         { return s.Pos }
 
 func (s *VarDeclaration) stmtNode() {}
 func (s *ExprStmt) stmtNode()       {}
 func (s *BlockStmt) stmtNode()      {}
-func (e *AssignmentStmt) stmtNode() {}
+func (s *AssignmentStmt) stmtNode() {}
+func (s *IfStmt) stmtNode()         {}

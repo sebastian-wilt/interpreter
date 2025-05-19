@@ -49,9 +49,28 @@ func (c *Checker) checkStmt(stmt ast.Stmt) bool {
 		return c.checkVarDeclaration(n)
 	case *ast.AssignmentStmt:
 		return c.checkAssignment(n)
+	case *ast.IfStmt:
+		return c.checkIfStmt(n)
 	default:
 		panic(fmt.Sprintf("unexpected ast.Stmt: %#v", n))
 	}
+}
+
+// Typecheck if statements
+func (c *Checker) checkIfStmt(stmt *ast.IfStmt) bool {
+	cond := c.checkExpr(stmt.Condition)
+	if cond != NewBoolean() {
+		c.error("Expected boolean condition", stmt)
+		return false
+	}
+
+	then := c.checkBlockStmt(stmt.Then)
+	if stmt.Else != nil {
+		otherwise := c.checkBlockStmt(stmt.Else)
+		return then && otherwise
+	}
+
+	return then
 }
 
 // Typecheck blocks
@@ -157,9 +176,80 @@ func (c *Checker) checkExpr(expr ast.Expr) Type {
 		return c.checkLiteralExpr(n)
 	case *ast.UnaryExpr:
 		return c.checkUnaryExpr(n)
+	case *ast.BlockExpr:
+		return c.checkBlockExpr(n)
+	case *ast.IfExpr:
+		return c.checkIfExpr(n)
+	case *ast.LogicalExpr:
+		return c.checkLogicalExpr(n)
 	default:
 		panic(fmt.Sprintf("unexpected ast.Expr: %#v", n))
 	}
+}
+
+// Typecheck logical expression
+func (c *Checker) checkLogicalExpr(expr *ast.LogicalExpr) Type {
+	left := c.checkExpr(expr.Left)
+	if left != NewBoolean() {
+		c.error("Expected boolean left operand", expr)
+		return nil
+	}
+
+	right := c.checkExpr(expr.Right)
+	if right != NewBoolean() {
+		c.error("Expected boolean right operand", expr)
+		return nil
+	}
+
+	return NewBoolean()
+}
+
+// Typecheck if expression
+func (c *Checker) checkIfExpr(expr *ast.IfExpr) Type {
+	cond := c.checkExpr(expr.Condition)
+	if cond != NewBoolean() {
+		c.error("Expected boolean condition", expr)
+		return nil
+	}
+
+	then := c.checkBlockExpr(expr.Then)
+	otherwise := c.checkBlockExpr(expr.Else)
+
+	if then != otherwise {
+		c.error("Both branches must return the same type", expr)
+		return nil
+	}
+
+	return then
+}
+
+// Typecheck block expressions
+func (c *Checker) checkBlockExpr(expr *ast.BlockExpr) Type {
+	c.enterBlock()
+	defer c.exitBlock()
+
+	var t Type
+	for i, n := range expr.Stmts {
+		stmt := n.(ast.Stmt)
+		switch s := stmt.(type) {
+		case *ast.AssignmentStmt:
+			c.checkAssignment(s)
+		case *ast.BlockStmt:
+			c.checkBlockStmt(s)
+		case *ast.ExprStmt:
+			if i == len(expr.Stmts)-1 {
+				t = c.checkExpr(s.Expr)
+			} else {
+				c.checkExpr(s.Expr)
+			}
+		case *ast.VarDeclaration:
+			c.checkVarDeclaration(s)
+		default:
+			panic(fmt.Sprintf("unexpected ast.Stmt: %#v", s))
+		}
+	}
+
+	return t
 }
 
 // Typecheck identifiers
