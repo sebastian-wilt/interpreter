@@ -6,14 +6,18 @@ type Environment struct {
 	parent *Environment
 }
 
+var outer *Environment
+
 func NewEnvironment() *Environment {
-	env := &Environment{
-		values: map[string]Value{},
-		types:  getInbuilts(),
-		parent: nil,
+	if outer == nil {
+		outer = &Environment{
+			values: map[string]Value{},
+			types:  getInbuilts(),
+			parent: nil,
+		}
 	}
 
-	return env
+	return outer
 }
 
 func NewEnvironmentWithParent(parent *Environment) *Environment {
