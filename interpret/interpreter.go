@@ -37,21 +37,7 @@ func (i *Interpreter) executeStmt(node ast.Stmt) {
 	case *ast.BlockStmt:
 		i.executeBlockStmt(stmt)
 	case *ast.ExprStmt:
-		val := i.evaluateExpr(stmt.Expr)
-		switch v := val.(type) {
-		case *Boolean:
-			fmt.Printf("%v\n", v.Value)
-		case *Char:
-			fmt.Printf("%c\n", v.Value)
-		case *Integer:
-			fmt.Printf("%d\n", v.Value)
-		case *Real:
-			fmt.Printf("%f\n", v.Value)
-		case *String:
-			fmt.Printf("%s\n", v.Value)
-		default:
-			panic(fmt.Sprintf("unexpected Value: %#v", val))
-		}
+		i.printValue(i.evaluateExpr(stmt.Expr))
 	case *ast.VarDeclaration:
 		i.executeVarDeclaration(stmt)
 	case *ast.AssignmentStmt:
@@ -223,24 +209,20 @@ func (i *Interpreter) evaluateUnaryExpr(expr *ast.UnaryExpr) Value {
 	switch expr.Op.Kind {
 	case token.BANG:
 		val := i.evaluateExpr(right).(*Boolean)
-		val.Value = !val.Value
-		return val
+		return NewBoolean(!val.Value)
 	case token.MINUS:
 		val := i.evaluateExpr(right)
 		switch v := val.(type) {
 		case *Integer:
-			v.Value = -v.Value
-			return v
+			return NewInteger(-v.Value)
 		case *Real:
-			v.Value = -v.Value
-			return v
+			return NewReal(-v.Value)
 		default:
 			panic(fmt.Sprintf("unexpected Value: %#v", v))
 		}
 	case token.TILDE:
 		val := i.evaluateExpr(right).(*Integer)
-		val.Value = ^val.Value
-		return val
+		return NewInteger(^val.Value)
 	default:
 		panic(fmt.Sprintf("unexpected token.TokenType: %#v", expr.Op.Kind))
 	}
@@ -255,16 +237,13 @@ func (i *Interpreter) evaluateBinaryExpr(expr *ast.BinaryExpr) Value {
 		switch l := left.(type) {
 		case *Integer:
 			r := right.(*Integer)
-			l.Value = l.Value + r.Value
-			return l
+			return NewInteger(l.Value + r.Value)
 		case *Real:
 			r := right.(*Real)
-			l.Value = l.Value + r.Value
-			return l
+			return NewReal(l.Value + r.Value)
 		case *String:
 			r := right.(*String)
-			l.Value = l.Value + r.Value
-			return l
+			return NewString(l.Value + r.Value)
 		default:
 			panic(fmt.Sprintf("Unexpected Value: %#v", l))
 		}
@@ -272,12 +251,10 @@ func (i *Interpreter) evaluateBinaryExpr(expr *ast.BinaryExpr) Value {
 		switch l := left.(type) {
 		case *Integer:
 			r := right.(*Integer)
-			l.Value = l.Value - r.Value
-			return l
+			return NewInteger(l.Value - r.Value)
 		case *Real:
 			r := right.(*Real)
-			l.Value = l.Value - r.Value
-			return l
+			return NewReal(l.Value - r.Value)
 		default:
 			panic(fmt.Sprintf("Unexpected Value: %#v", l))
 		}
@@ -285,12 +262,10 @@ func (i *Interpreter) evaluateBinaryExpr(expr *ast.BinaryExpr) Value {
 		switch l := left.(type) {
 		case *Integer:
 			r := right.(*Integer)
-			l.Value = l.Value / r.Value
-			return l
+			return NewInteger(l.Value / r.Value)
 		case *Real:
 			r := right.(*Real)
-			l.Value = l.Value / r.Value
-			return l
+			return NewReal(l.Value / r.Value)
 		default:
 			panic(fmt.Sprintf("Unexpected Value: %#v", l))
 		}
@@ -298,12 +273,10 @@ func (i *Interpreter) evaluateBinaryExpr(expr *ast.BinaryExpr) Value {
 		switch l := left.(type) {
 		case *Integer:
 			r := right.(*Integer)
-			l.Value = l.Value * r.Value
-			return l
+			return NewInteger(l.Value * r.Value)
 		case *Real:
 			r := right.(*Real)
-			l.Value = l.Value * r.Value
-			return l
+			return NewReal(l.Value * r.Value)
 		default:
 			panic(fmt.Sprintf("Unexpected Value: %#v", l))
 		}
@@ -311,12 +284,10 @@ func (i *Interpreter) evaluateBinaryExpr(expr *ast.BinaryExpr) Value {
 		switch l := left.(type) {
 		case *Integer:
 			r := right.(*Integer)
-			l.Value = intPow(l.Value, r.Value)
-			return l
+			return NewInteger(intPow(l.Value, r.Value))
 		case *Real:
 			r := right.(*Real)
-			l.Value = math.Pow(l.Value, r.Value)
-			return l
+			return NewReal(math.Pow(l.Value, r.Value))
 		default:
 			panic(fmt.Sprintf("Unexpected Value: %#v", l))
 		}
@@ -332,8 +303,7 @@ func (i *Interpreter) evaluateBinaryExpr(expr *ast.BinaryExpr) Value {
 		switch l := left.(type) {
 		case *Boolean:
 			r := right.(*Boolean)
-			l.Value = l.Value == r.Value
-			return l
+			return NewBoolean(l.Value == r.Value)
 		case *Char:
 			r := right.(*Char)
 			return NewBoolean(l.Value == r.Value)
@@ -468,4 +438,21 @@ func (i *Interpreter) enterBlock() {
 
 func (i *Interpreter) exitBlock() {
 	i.env = i.env.parent
+}
+
+func (i *Interpreter) printValue(val Value) {
+	switch v := val.(type) {
+	case *Boolean:
+		fmt.Printf("%v\n", v.Value)
+	case *Char:
+		fmt.Printf("%c\n", v.Value)
+	case *Integer:
+		fmt.Printf("%d\n", v.Value)
+	case *Real:
+		fmt.Printf("%f\n", v.Value)
+	case *String:
+		fmt.Printf("%s\n", v.Value)
+	default:
+		panic(fmt.Sprintf("unexpected Value: %#v", val))
+	}
 }
