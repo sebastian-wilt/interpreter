@@ -127,9 +127,29 @@ func (i *Interpreter) evaluateExpr(node ast.Expr) Value {
 		return i.evaluateBlockExpr(n)
 	case *ast.IfExpr:
 		return i.evaluateIfExpr(n)
+	case *ast.LogicalExpr:
+		return i.evaluateLogicalExpr(n)
 	default:
 		panic(fmt.Sprintf("unexpected ast.Expr: %#v", n))
 	}
+}
+
+// Evaluate logical expressions
+func (i *Interpreter) evaluateLogicalExpr(expr *ast.LogicalExpr) Value {
+	left := i.evaluateExpr(expr.Left).(*Boolean)
+	// Shortcircuit if left side of "||" is true
+	if expr.Op.Kind == token.LOR {
+		if left.Value {
+			return left
+		}
+	} else {
+		// Or left side of "&&" is false
+		if !left.Value {
+			return left
+		}
+	}
+
+	return i.evaluateExpr(expr.Right).(*Boolean)
 }
 
 // Evaluate if expressions

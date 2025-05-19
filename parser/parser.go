@@ -339,7 +339,9 @@ func (p *Parser) expressionStatement() (ast.Stmt, error) {
 /*
 Precedence:
 
-	expression ::= equality;
+	expression ::= lor;
+	lor := land ("or" land)*;
+	land := equality ("and" equality)*;
 	equality ::= comparison ( ( "!=" | "==") comparison)*;
 	comparison ::= term ( ( ">" | ">=" | "<=" | "<") term)*;
 	term ::= factor ( ( "-" | "+" ) factor)*;
@@ -356,7 +358,7 @@ func (p *Parser) expression() (ast.Expr, error) {
 		return p.ifExpr()
 	}
 
-	return p.equality()
+	return p.logicalOr()
 }
 
 // Parse if expressions
@@ -426,6 +428,56 @@ func (p *Parser) blockExpr() (*ast.BlockExpr, error) {
 	}
 
 	return expr, nil
+}
+
+// Parse logical disjunctions
+func (p *Parser) logicalOr() (ast.Expr, error) {
+	left, err := p.logicalAnd()
+	if err != nil {
+		return nil, err
+	}
+
+	for p.check(token.LOR) {
+		op := p.advance()
+		right, err := p.logicalAnd()
+		if err != nil {
+			return nil, err
+		}
+
+		left = &ast.LogicalExpr{
+			Left:  left,
+			Op:    op,
+			Pos:   op.Pos,
+			Right: right,
+		}
+	}
+
+	return left, nil
+}
+
+// Parse logical conjunctions
+func (p *Parser) logicalAnd() (ast.Expr, error) {
+	left, err := p.equality()
+	if err != nil {
+		return nil, err
+	}
+
+	for p.check(token.LAND) {
+		op := p.advance()
+		right, err := p.equality()
+		if err != nil {
+			return nil, err
+		}
+
+		left = &ast.LogicalExpr{
+			Left:  left,
+			Op:    op,
+			Pos:   op.Pos,
+			Right: right,
+		}
+	}
+
+	return left, nil
 }
 
 // Parse expressions with same precedence as equality.

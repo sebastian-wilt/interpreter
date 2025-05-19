@@ -180,9 +180,28 @@ func (c *Checker) checkExpr(expr ast.Expr) Type {
 		return c.checkBlockExpr(n)
 	case *ast.IfExpr:
 		return c.checkIfExpr(n)
+	case *ast.LogicalExpr:
+		return c.checkLogicalExpr(n)
 	default:
 		panic(fmt.Sprintf("unexpected ast.Expr: %#v", n))
 	}
+}
+
+// Typecheck logical expression
+func (c *Checker) checkLogicalExpr(expr *ast.LogicalExpr) Type {
+	left := c.checkExpr(expr.Left)
+	if left != NewBoolean() {
+		c.error("Expected boolean left operand", expr)
+		return nil
+	}
+
+	right := c.checkExpr(expr.Right)
+	if right != NewBoolean() {
+		c.error("Expected boolean right operand", expr)
+		return nil
+	}
+
+	return NewBoolean()
 }
 
 // Typecheck if expression

@@ -38,6 +38,13 @@ type (
 		Right Expr           // Right operand
 	}
 
+	LogicalExpr struct {
+		Left  Expr           // Left operand
+		Op    token.Token    // Operator
+		Pos   token.Position // Position of op
+		Right Expr           // Right operand
+	}
+
 	GroupingExpr struct {
 		Pos  token.Position // Position of left paren
 		Expr Expr           // Expression inside parenthesis
@@ -69,6 +76,7 @@ func (e *GroupingExpr) Position() token.Position { return e.Pos }
 func (e *UnaryExpr) Position() token.Position    { return e.Pos }
 func (e *BlockExpr) Position() token.Position    { return e.Pos }
 func (e *IfExpr) Position() token.Position       { return e.Pos }
+func (e *LogicalExpr) Position() token.Position  { return e.Pos }
 
 func (e *Ident) exprNode()        {}
 func (e *LiteralExpr) exprNode()  {}
@@ -77,6 +85,7 @@ func (e *GroupingExpr) exprNode() {}
 func (e *UnaryExpr) exprNode()    {}
 func (e *BlockExpr) exprNode()    {}
 func (e *IfExpr) exprNode()       {}
+func (e *LogicalExpr) exprNode()  {}
 
 // Statements
 type (

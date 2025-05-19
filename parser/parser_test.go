@@ -103,6 +103,43 @@ func TestNestedExpression(t *testing.T) {
 	verifyLiteral(t, right, ast.LiteralExpr{Kind: token.INTEGER, Value: "3"})
 }
 
+func TestLogicalOperators(t *testing.T) {
+	input := "true && false || true"
+
+	lexer := lexer.NewLexer([]byte(input), "test")
+	tokens, errors := lexer.Tokenize()
+	if len(errors) != 0 {
+		t.Log("Expected no lexer errors")
+
+		for i, err := range errors {
+			t.Logf("Error %d: %v", i, err)
+		}
+
+		t.FailNow()
+	}
+
+	parser := NewParser(tokens, "test")
+	expr, err := parser.expression()
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	binary := verifyExprType[*ast.LogicalExpr](t, expr)
+	verifyOperator(t, binary.Op, token.Token{Kind: token.LOR})
+
+	left := verifyExprType[*ast.LogicalExpr](t, binary.Left)
+	verifyOperator(t, left.Op, token.Token{Kind: token.LAND})
+
+	lleft := verifyExprType[*ast.LiteralExpr](t, left.Left)
+	verifyLiteral(t, lleft, ast.LiteralExpr{Kind: token.TRUE, Value: "true"})
+
+	lright := verifyExprType[*ast.LiteralExpr](t, left.Right)
+	verifyLiteral(t, lright, ast.LiteralExpr{Kind: token.FALSE, Value: "false"})
+
+	right := verifyExprType[*ast.LiteralExpr](t, binary.Right)
+	verifyLiteral(t, right, ast.LiteralExpr{Kind: token.TRUE, Value: "true"})
+}
+
 func verifyExprType[T ast.Expr](t *testing.T, expr ast.Expr) T {
 	var expected T
 	node, ok := expr.(T)
