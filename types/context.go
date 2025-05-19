@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
+var outer *context
+
 type context struct {
 	symbols map[string]symbol
 	types   map[string]Type
@@ -12,13 +14,15 @@ type context struct {
 }
 
 func newContext() *context {
-	c := &context{
-		symbols: map[string]symbol{},
-		types:   getPrimitives(),
-		parent:  nil,
+	if outer == nil {
+		outer = &context{
+			symbols: map[string]symbol{},
+			types:   getPrimitives(),
+			parent:  nil,
+		}
 	}
 
-	return c
+	return outer
 }
 
 func newContextWithParent(parent *context) *context {
