@@ -319,6 +319,27 @@ func (i *Interpreter) evaluateBinaryExpr(expr *ast.BinaryExpr) Value {
 		default:
 			panic(fmt.Sprintf("unexpected Value: %#v", l))
 		}
+	case token.BANG_EQUAL:
+		switch l := left.(type) {
+		case *Boolean:
+			r := right.(*Boolean)
+			return NewBoolean(l.Value != r.Value)
+		case *Char:
+			r := right.(*Char)
+			return NewBoolean(l.Value != r.Value)
+		case *Integer:
+			r := right.(*Integer)
+			return NewBoolean(l.Value != r.Value)
+		case *Real:
+			r := right.(*Real)
+			return NewBoolean(l.Value != r.Value)
+		case *String:
+			r := right.(*String)
+			return NewBoolean(l.Value != r.Value)
+		default:
+			panic(fmt.Sprintf("unexpected Value: %#v", l))
+
+		}
 	case token.GREATER:
 		switch l := left.(type) {
 		case *Char:

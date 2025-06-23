@@ -386,7 +386,7 @@ func (c *Checker) checkBinaryExpr(expr *ast.BinaryExpr) Type {
 				return left
 			}
 		}
-	case token.EQUAL_EQUAL:
+	case token.EQUAL_EQUAL, token.BANG_EQUAL:
 		switch p_left.kind {
 		case Boolean, Char, Int, Real, String:
 			if p_left.kind == p_right.kind {
