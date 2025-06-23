@@ -8,20 +8,6 @@ import (
 	"slices"
 )
 
-/*
-	Recursive descent parser
-
-	Operator precedence:
-	expression ::= equality;
-	equality ::= comparison ( ( "!=" | "==") comparison)*;
-	comparison ::= term ( ( ">" | ">=" | "<=" | "<") term)*;
-	term ::= factor ( ( "-" | "+" ) factor)*;
-	factor ::= unary ( ( "/" | "*" | "%") unary)*;
-	unary ::= ("!" | "-") unary | exponent;
-	exponent ::= primary ("**") primary | primary;
-	primary ::=  IDENTIFIER | INTEGER | REAL | STRING | "true" | "false" | "(" expression ")";
-*/
-
 type Parser struct {
 	file    string        // Name of file
 	tokens  []token.Token // List of tokens to parse
@@ -157,7 +143,38 @@ func (p *Parser) statement() (ast.Stmt, error) {
 		return p.ifStmt()
 	}
 
+	if p.expect([]token.TokenType{token.WHILE}) {
+		return p.whileStmt()
+	}
+
 	return p.expressionStatement()
+}
+
+// Parse while loop
+func (p *Parser) whileStmt() (ast.Stmt, error) {
+	while := p.previous()
+	condition, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+
+	lbrace, err := p.consume(token.LEFT_BRACE)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := p.block()
+
+	block := &ast.BlockStmt{
+		Pos:   lbrace.Pos,
+		Stmts: body,
+	}
+
+	return &ast.WhileStmt{
+		Pos:       while.Pos,
+		Condition: condition,
+		Block:     block,
+	}, nil
 }
 
 // Parse if statement

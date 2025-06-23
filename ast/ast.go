@@ -119,6 +119,12 @@ type (
 		Then      *BlockStmt     // Executed if condition is true
 		Else      *BlockStmt     // Executed if condition is false
 	}
+
+	WhileStmt struct {
+		Pos       token.Position // Position of 'while'
+		Condition Expr           // Execute block while condition is true
+		Block     *BlockStmt     // Block to execute
+	}
 )
 
 func (s *VarDeclaration) Position() token.Position { return s.Pos }
@@ -126,9 +132,11 @@ func (s *ExprStmt) Position() token.Position       { return s.Pos }
 func (s *BlockStmt) Position() token.Position      { return s.Pos }
 func (s *AssignmentStmt) Position() token.Position { return s.Pos }
 func (s *IfStmt) Position() token.Position         { return s.Pos }
+func (s *WhileStmt) Position() token.Position      { return s.Pos }
 
 func (s *VarDeclaration) stmtNode() {}
 func (s *ExprStmt) stmtNode()       {}
 func (s *BlockStmt) stmtNode()      {}
 func (s *AssignmentStmt) stmtNode() {}
 func (s *IfStmt) stmtNode()         {}
+func (s *WhileStmt) stmtNode()      {}
