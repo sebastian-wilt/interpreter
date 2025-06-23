@@ -51,9 +51,22 @@ func (c *Checker) checkStmt(stmt ast.Stmt) bool {
 		return c.checkAssignment(n)
 	case *ast.IfStmt:
 		return c.checkIfStmt(n)
+	case *ast.WhileStmt:
+		return c.checkWhileStmt(n)
 	default:
 		panic(fmt.Sprintf("unexpected ast.Stmt: %#v", n))
 	}
+}
+
+// Typecheck while statement
+func (c *Checker) checkWhileStmt(stmt *ast.WhileStmt) bool {
+	cond := c.checkExpr(stmt.Condition)
+	if cond != NewBoolean() {
+		c.error("Expected boolean condition", stmt)
+		return false
+	}
+
+	return c.checkBlockStmt(stmt.Block)
 }
 
 // Typecheck if statements

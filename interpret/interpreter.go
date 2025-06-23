@@ -44,8 +44,17 @@ func (i *Interpreter) executeStmt(node ast.Stmt) {
 		i.executeAssignment(stmt)
 	case *ast.IfStmt:
 		i.executeIfStmt(stmt)
+	case *ast.WhileStmt:
+		i.executeWhileStmt(stmt)
 	default:
 		panic(fmt.Sprintf("unexpected ast.Stmt: %#v", stmt))
+	}
+}
+
+// Execute while statement
+func (i *Interpreter) executeWhileStmt(stmt *ast.WhileStmt) {
+	for i.evaluateExpr(stmt.Condition).(*Boolean).Value {
+		i.executeBlockStmt(stmt.Block)
 	}
 }
 
